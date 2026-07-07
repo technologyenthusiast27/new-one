@@ -3,16 +3,19 @@ import path from "path";
 import crypto from "crypto";
 import type { PassType, Ticket, TicketStatus } from "./types";
 import { PASS_MAP } from "./passes";
+import { prisma } from "./prisma";
+import { PassType as DbPassType, TicketStatus as DbTicketStatus } from "@prisma/client";
 
 /**
- * Lightweight JSON-file ticket store.
+ * Ticket store.
  *
- * For local/dev and single-instance deployments this persists to
- * `data/tickets.json`. On read-only / serverless filesystems it
- * transparently falls back to an in-memory store (kept on globalThis so
- * it survives hot reloads). Swap this module for a real database
- * (Postgres, Supabase, Mongo…) for multi-instance production use.
+ * With `DATABASE_URL` set, tickets persist to Postgres via Prisma —
+ * the right choice for production / multi-instance deployments.
+ * With no `DATABASE_URL`, falls back to a JSON file (`data/tickets.json`,
+ * or in-memory on read-only/serverless filesystems) so the demo still
+ * works out of the box with zero configuration.
  */
+export const dbConfigured = Boolean(process.env.DATABASE_URL);
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "tickets.json");
@@ -62,6 +65,56 @@ export function makeTicketId(passType: PassType): string {
   return `HOB-${passType.toUpperCase()}-${shortId()}`;
 }
 
+// ── Prisma <-> Ticket mapping ──────────────────────────────────────
+// Postgres enum stores "checked-in" as checked_in; the rest map 1:1.
+type DbTicket = {
+  id: string;
+  passType: string;
+  passName: string;
+  quantity: number;
+  seats: number;
+  amount: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: DbTicketStatus;
+  createdAt: Date;
+  checkedInAt: Date | null;
+  paymentId: string | null;
+  orderId: string | null;
+  demo: boolean;
+};
+
+function fromDb(row: DbTicket): Ticket {
+  return {
+    id: row.id,
+    passType: row.passType as PassType,
+    passName: row.passName,
+    quantity: row.quantity,
+    seats: row.seats,
+    amount: row.amount,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    status: (row.status === DbTicketStatus.checked_in
+      ? "checked-in"
+      : row.status) as TicketStatus,
+    createdAt: row.createdAt.toISOString(),
+    checkedInAt: row.checkedInAt?.toISOString(),
+    paymentId: row.paymentId ?? undefined,
+    orderId: row.orderId ?? undefined,
+    demo: row.demo,
+  };
+}
+
+function toDbStatus(status: TicketStatus): DbTicketStatus {
+  return status === "checked-in" ? DbTicketStatus.checked_in : (status as DbTicketStatus);
+}
+
+function toDbPassType(passType: PassType): DbPassType {
+  return passType as DbPassType;
+}
+
 export interface CreateTicketInput {
   passType: PassType;
   quantity: number;
@@ -93,6 +146,27 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
     demo: input.demo,
   };
 
+  if (dbConfigured) {
+    const row = await prisma.ticket.create({
+      data: {
+        id: ticket.id,
+        passType: toDbPassType(ticket.passType),
+        passName: ticket.passName,
+        quantity: ticket.quantity,
+        seats: ticket.seats,
+        amount: ticket.amount,
+        name: ticket.name,
+        email: ticket.email,
+        phone: ticket.phone,
+        status: DbTicketStatus.confirmed,
+        paymentId: ticket.paymentId,
+        orderId: ticket.orderId,
+        demo: ticket.demo ?? false,
+      },
+    });
+    return fromDb(row as unknown as DbTicket);
+  }
+
   const tickets = await readAll();
   tickets.push(ticket);
   await writeAll(tickets);
@@ -100,11 +174,19 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
 }
 
 export async function getTicket(id: string): Promise<Ticket | undefined> {
+  if (dbConfigured) {
+    const row = await prisma.ticket.findUnique({ where: { id } });
+    return row ? fromDb(row as unknown as DbTicket) : undefined;
+  }
   const tickets = await readAll();
   return tickets.find((t) => t.id === id);
 }
 
 export async function listTickets(): Promise<Ticket[]> {
+  if (dbConfigured) {
+    const rows = await prisma.ticket.findMany({ orderBy: { createdAt: "desc" } });
+    return rows.map((r) => fromDb(r as unknown as DbTicket));
+  }
   const tickets = await readAll();
   return [...tickets].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -113,6 +195,21 @@ export async function updateTicketStatus(
   id: string,
   status: TicketStatus,
 ): Promise<Ticket | undefined> {
+  if (dbConfigured) {
+    try {
+      const row = await prisma.ticket.update({
+        where: { id },
+        data: {
+          status: toDbStatus(status),
+          checkedInAt: status === "checked-in" ? new Date() : undefined,
+        },
+      });
+      return fromDb(row as unknown as DbTicket);
+    } catch {
+      return undefined;
+    }
+  }
+
   const tickets = await readAll();
   const idx = tickets.findIndex((t) => t.id === id);
   if (idx === -1) return undefined;
@@ -133,7 +230,10 @@ export interface AdminStats {
 }
 
 export async function getStats(): Promise<AdminStats> {
-  const tickets = await readAll();
+  const tickets = dbConfigured
+    ? (await prisma.ticket.findMany()).map((r) => fromDb(r as unknown as DbTicket))
+    : await readAll();
+
   const byPass = {
     normal: { count: 0, revenue: 0 },
     vip: { count: 0, revenue: 0 },

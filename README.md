@@ -26,6 +26,7 @@ Apple launch page crossed with a high-end music-festival site.
 | Framework  | Next.js 14 (App Router, TypeScript) |
 | Styling    | Tailwind CSS + custom glass/glow design tokens |
 | Motion     | Framer Motion |
+| Database   | Postgres via Prisma (JSON-file fallback for demo) |
 | Payments   | Razorpay (with demo fallback) |
 | Tickets    | `qrcode` (server-side data-URL QR) |
 | Email      | `nodemailer` (SMTP) |
@@ -57,6 +58,7 @@ in what you have:
 
 | Variable | Purpose |
 |----------|---------|
+| `DATABASE_URL` | Postgres connection string (Vercel Postgres, Neon, Supabase…) — enables persistent ticket storage |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Enable real Razorpay orders & signature verification |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Public key id for the browser checkout widget |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | Send confirmation emails |
@@ -78,17 +80,28 @@ app/
 components/             # Navbar, Hero, Passes, BookingModal, Footer…
 lib/
   passes.ts             # Event details + pass definitions
-  store.ts              # JSON-file ticket store (memory fallback)
+  store.ts              # Ticket store (Postgres via Prisma, JSON-file fallback)
+  prisma.ts             # Prisma client singleton
   razorpay.ts           # Order creation + signature verification
   qr.ts / email.ts      # QR generation + confirmation email
+prisma/
+  schema.prisma         # Ticket table schema
 ```
 
 ## 💾 Data persistence
 
-Tickets are stored in `data/tickets.json` for local/single-instance use, with an
-in-memory fallback on read-only/serverless filesystems. For multi-instance
-production, swap `lib/store.ts` for a real database (Postgres, Supabase, Mongo…) —
-the interface is intentionally small.
+With `DATABASE_URL` set, tickets persist to **Postgres via Prisma** — the right
+choice for production and multi-instance deployments. Without it, tickets fall
+back to `data/tickets.json` (with an in-memory fallback on read-only/serverless
+filesystems), so the demo still runs with zero configuration.
+
+To use Postgres:
+
+```bash
+# 1. Set DATABASE_URL in .env.local (Vercel Postgres, Neon, Supabase…)
+# 2. Push the schema to your database
+npm run db:push
+```
 
 ## 📦 Scripts
 

@@ -1,0 +1,45 @@
+// House of Balloons — ticket store
+// Run `npx prisma migrate dev` locally after setting DATABASE_URL,
+// or `npx prisma db push` against a fresh database.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TicketStatus {
+  confirmed
+  checked_in @map("checked-in")
+  cancelled
+}
+
+enum PassType {
+  normal
+  vip
+  group
+}
+
+model Ticket {
+  id          String       @id
+  passType    PassType
+  passName    String
+  quantity    Int
+  seats       Int
+  amount      Int
+  name        String
+  email       String
+  phone       String
+  status      TicketStatus @default(confirmed)
+  createdAt   DateTime     @default(now())
+  checkedInAt DateTime?
+  paymentId   String?
+  orderId     String?
+  demo        Boolean      @default(false)
+
+  @@index([status])
+  @@index([email])
+}
