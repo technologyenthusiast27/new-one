@@ -11,6 +11,7 @@ import {
 } from "@/lib/format";
 import { AmbientGlow } from "./ui/AmbientGlow";
 import { Countdown } from "./Countdown";
+import { AgeBadge } from "./AgeBadge";
 
 export function Hero({
   event,
@@ -115,6 +116,8 @@ export function Hero({
               {venue}
             </span>
           )}
+          <span className="hidden h-4 w-px bg-white/15 sm:block" />
+          <AgeBadge category={event.ageCategory} />
         </motion.div>
 
         <motion.div variants={item} className="mt-10 flex justify-center">

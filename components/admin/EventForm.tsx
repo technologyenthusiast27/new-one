@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { Event, EventStatus } from "@/lib/types";
+import type { AgeCategory, Event, EventStatus } from "@/lib/types";
+import { AGE_CATEGORIES, ageCategoryLabel } from "@/lib/age";
 
 export interface EventFormValues {
   name: string;
@@ -15,6 +16,10 @@ export interface EventFormValues {
   doorsOpenAt: string;
   venueName: string;
   venueCity: string;
+  ageCategory: AgeCategory;
+  minorsAllowed: boolean;
+  guardianConsentRequired: boolean;
+  idRequired: boolean;
 }
 
 // Convert an ISO timestamp to a value the <input type=datetime-local> accepts.
@@ -46,6 +51,10 @@ export function EventForm({
     doorsOpenAt: toLocalInput(initial?.doorsOpenAt ?? null),
     venueName: initial?.venueName ?? "",
     venueCity: initial?.venueCity ?? "",
+    ageCategory: initial?.ageCategory ?? "18_plus",
+    minorsAllowed: initial?.minorsAllowed ?? false,
+    guardianConsentRequired: initial?.guardianConsentRequired ?? false,
+    idRequired: initial?.idRequired ?? true,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +79,10 @@ export function EventForm({
         doorsOpenAt: values.doorsOpenAt ? new Date(values.doorsOpenAt).toISOString() : null,
         venueName: values.venueName || null,
         venueCity: values.venueCity || null,
+        ageCategory: values.ageCategory,
+        minorsAllowed: values.minorsAllowed,
+        guardianConsentRequired: values.guardianConsentRequired,
+        idRequired: values.idRequired,
       };
       const res = await fetch(
         initial ? `/api/admin/events/${initial.id}` : "/api/admin/events",
@@ -119,6 +132,48 @@ export function EventForm({
         <TextField label="Venue city" value={values.venueCity} onChange={(v) => set("venueCity", v)} />
       </div>
 
+      {/* Age & entry policy */}
+      <fieldset className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+        <legend className="px-2 text-sm font-medium text-neutral-300">Age &amp; entry policy</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Minimum age</Label>
+            <select
+              value={values.ageCategory}
+              onChange={(e) => set("ageCategory", e.target.value as AgeCategory)}
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white focus:border-violet-glow/50 focus:outline-none"
+            >
+              {AGE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {ageCategoryLabel(c)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col justify-center gap-3 pt-2">
+            <Checkbox
+              label="Attendees under 18 permitted"
+              checked={values.minorsAllowed}
+              onChange={(v) => set("minorsAllowed", v)}
+            />
+            <Checkbox
+              label="Parent/guardian permission required for minors"
+              checked={values.guardianConsentRequired}
+              onChange={(v) => set("guardianConsentRequired", v)}
+            />
+            <Checkbox
+              label="Government ID may be verified at entry"
+              checked={values.idRequired}
+              onChange={(v) => set("idRequired", v)}
+            />
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          These settings drive the public Age &amp; Entry Policy and the required
+          checkout confirmations. &ldquo;18+&rdquo; automatically disallows minors.
+        </p>
+      </fieldset>
+
       {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
 
       <div className="mt-6 flex items-center gap-3">
@@ -137,6 +192,28 @@ export function EventForm({
 
 function Label({ children }: { children: React.ReactNode }) {
   return <label className="mb-1.5 block text-sm font-medium text-neutral-300">{children}</label>;
+}
+
+function Checkbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 rounded border-white/20 bg-white/5 accent-violet-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-glow/60"
+      />
+      {label}
+    </label>
+  );
 }
 
 function TextField({

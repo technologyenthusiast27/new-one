@@ -121,3 +121,28 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Accessibility: a visible focus ring for any keyboard-focused control that
+   doesn't define its own, so keyboard navigation is always perceivable. */
+:focus-visible {
+  outline: 2px solid theme("colors.violet.soft");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip-to-content link — visible only when focused. */
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -100px;
+  z-index: 200;
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  background: theme("colors.violet.deep");
+  color: #fff;
+  font-size: 0.875rem;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 1rem;
+}

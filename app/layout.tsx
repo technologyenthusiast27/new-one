@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Jost } from "next/font/google";
 import "./globals.css";
+import { CookieConsent } from "@/components/CookieConsent";
 
 const display = Bodoni_Moda({
   subsets: ["latin"],
@@ -47,7 +48,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body className="grain min-h-dvh selection:bg-violet-glow/30">
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

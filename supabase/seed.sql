@@ -7,7 +7,9 @@
 -- ── Event: House of Balloons ────────────────────────────────────────────────
 insert into public.events (
   slug, code, name, presenter, tagline, status,
-  event_date, doors_open_at, venue_name, venue_city, currency, content
+  event_date, doors_open_at, venue_name, venue_city, currency,
+  age_category, minors_allowed, guardian_consent_required, id_required,
+  content
 ) values (
   'house-of-balloons',
   'HOB',
@@ -20,6 +22,7 @@ insert into public.events (
   'The Grand Pavilion',
   'Hyderabad, Telangana, India',
   'INR',
+  '18_plus', false, false, true,
   jsonb_build_object(
     'experience', jsonb_build_array(
       jsonb_build_object('title','Immersive Sound','body','A tuned line-array system engineered for depth, clarity and body-moving low end.'),
@@ -45,18 +48,22 @@ insert into public.events (
   )
 )
 on conflict (slug) do update set
-  code          = excluded.code,
-  name          = excluded.name,
-  presenter     = excluded.presenter,
-  tagline       = excluded.tagline,
-  status        = excluded.status,
-  event_date    = excluded.event_date,
-  doors_open_at = excluded.doors_open_at,
-  venue_name    = excluded.venue_name,
-  venue_city    = excluded.venue_city,
-  currency      = excluded.currency,
-  content       = excluded.content,
-  updated_at    = now();
+  code                      = excluded.code,
+  name                      = excluded.name,
+  presenter                 = excluded.presenter,
+  tagline                   = excluded.tagline,
+  status                    = excluded.status,
+  event_date                = excluded.event_date,
+  doors_open_at             = excluded.doors_open_at,
+  venue_name                = excluded.venue_name,
+  venue_city                = excluded.venue_city,
+  currency                  = excluded.currency,
+  age_category              = excluded.age_category,
+  minors_allowed            = excluded.minors_allowed,
+  guardian_consent_required = excluded.guardian_consent_required,
+  id_required               = excluded.id_required,
+  content                   = excluded.content,
+  updated_at                = now();
 
 -- ── Ticket types ────────────────────────────────────────────────────────────
 insert into public.ticket_types (

@@ -6,6 +6,7 @@ import type { Event } from "@/lib/types";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { Marquee } from "@/components/Marquee";
 import { EventGrid } from "@/components/EventGrid";
+import { SiteFooter } from "@/components/SiteFooter";
 import { Reveal } from "@/components/ui/Reveal";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <main className="relative">
+      <main id="main-content" className="relative">
         {/* Hero */}
         <section className="relative flex min-h-[88dvh] flex-col items-center justify-center overflow-hidden px-5 pt-28 pb-16 text-center sm:px-8">
           <AmbientGlow />
@@ -140,17 +141,7 @@ export default async function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="relative border-t border-white/10 bg-charcoal-950/60">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-10 text-sm text-neutral-500 sm:flex-row sm:px-8">
-          <p>© {new Date().getFullYear()} NovaLabs. All rights reserved.</p>
-          <nav className="flex items-center gap-6">
-            <a href="#events" className="transition-colors hover:text-white">Events</a>
-            <Link href="/admin" className="transition-colors hover:text-white">Admin</Link>
-            <span>18+ · Drink responsibly</span>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

@@ -6,6 +6,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Minus, Plus, ShieldCheck, Users } from "lucide-react";
 import type { Event, TicketType } from "@/lib/types";
 import { inr } from "@/lib/format";
+import { allowsMinors, ageCategoryLabel } from "@/lib/age";
+import { AgeBadge } from "./AgeBadge";
+
+interface Consents {
+  terms: boolean;
+  privacy: boolean;
+  refund: boolean;
+  age: boolean;
+  guardian: boolean;
+}
+
+const EMPTY_CONSENTS: Consents = {
+  terms: false,
+  privacy: false,
+  refund: false,
+  age: false,
+  guardian: false,
+};
 
 declare global {
   interface Window {
@@ -35,12 +53,14 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [consents, setConsents] = useState<Consents>(EMPTY_CONSENTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setQuantity(1);
     setForm({ name: "", email: "", phone: "" });
+    setConsents(EMPTY_CONSENTS);
     setError(null);
     setLoading(false);
   }, [ticketType]);
@@ -61,11 +81,25 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const total = ticketType.priceInr * quantity;
   const totalSeats = ticketType.seatsPerTicket * quantity;
 
+  const minorsMayAttend = allowsMinors(event);
+  const allConsented =
+    consents.terms &&
+    consents.privacy &&
+    consents.refund &&
+    consents.age &&
+    (!minorsMayAttend || consents.guardian);
+
+  function toggle(key: keyof Consents) {
+    setConsents((c) => ({ ...c, [key]: !c[key] }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!ticketType) return;
+    if (!allConsented)
+      return setError("Please accept all the required confirmations to continue.");
     if (form.name.trim().length < 2) return setError("Please enter your full name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       return setError("Please enter a valid email address.");
@@ -172,7 +206,10 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
           </button>
 
           <span className="section-eyebrow">Checkout</span>
-          <h3 className="mt-2 text-2xl font-semibold">{ticketType.name} Pass</h3>
+          <div className="mt-2 flex items-center gap-3">
+            <h3 className="text-2xl font-semibold">{ticketType.name} Pass</h3>
+            <AgeBadge category={event.ageCategory} />
+          </div>
           {ticketType.tagline && (
             <p className="mt-1 text-sm text-neutral-400">{ticketType.tagline}</p>
           )}
@@ -240,6 +277,45 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
               )}
             </div>
 
+            {/* Required confirmations — the Pay button stays disabled until all
+                are checked (plus guardian consent when the event admits minors). */}
+            <fieldset className="space-y-2.5 border-t border-white/10 pt-4">
+              <legend className="mb-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                Before you continue
+              </legend>
+              <Consent id="c-terms" checked={consents.terms} onChange={() => toggle("terms")}>
+                I agree to the{" "}
+                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-violet-soft hover:underline">
+                  Terms &amp; Conditions
+                </a>
+                .
+              </Consent>
+              <Consent id="c-privacy" checked={consents.privacy} onChange={() => toggle("privacy")}>
+                I have read the{" "}
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-violet-soft hover:underline">
+                  Privacy Policy
+                </a>
+                .
+              </Consent>
+              <Consent id="c-refund" checked={consents.refund} onChange={() => toggle("refund")}>
+                I understand the{" "}
+                <a href="/legal/refund" target="_blank" rel="noopener noreferrer" className="text-violet-soft hover:underline">
+                  Refund Policy
+                </a>
+                .
+              </Consent>
+              <Consent id="c-age" checked={consents.age} onChange={() => toggle("age")}>
+                I confirm I meet the event&rsquo;s age requirement (
+                {ageCategoryLabel(event.ageCategory)}).
+              </Consent>
+              {minorsMayAttend && (
+                <Consent id="c-guardian" checked={consents.guardian} onChange={() => toggle("guardian")}>
+                  If I am under 18, I have any required parent or legal guardian
+                  permission to attend.
+                </Consent>
+              )}
+            </fieldset>
+
             {error && (
               <p
                 role="alert"
@@ -256,7 +332,12 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
                   {inr(total)}
                 </p>
               </div>
-              <button type="submit" className="btn-primary" disabled={loading}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={loading || !allConsented}
+                aria-disabled={loading || !allConsented}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -315,5 +396,30 @@ function Field({
         className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-neutral-500 transition-colors focus:border-violet-glow/50 focus:bg-white/[0.05] focus:outline-none focus:ring-2 focus:ring-violet-glow/25"
       />
     </div>
+  );
+}
+
+function Consent({
+  id,
+  checked,
+  onChange,
+  children,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm text-neutral-300">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-white/20 bg-white/5 text-violet-glow accent-violet-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-glow/60"
+      />
+      <span>{children}</span>
+    </label>
   );
 }

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Event, EventContent, EventStatus } from "./types";
+import type { AgeCategory, Event, EventContent, EventStatus } from "./types";
 
 // Row shape as stored in Postgres (snake_case).
 interface EventRow {
@@ -17,6 +17,10 @@ interface EventRow {
   currency: string;
   cover_image_url: string | null;
   content: EventContent | null;
+  age_category: AgeCategory | null;
+  minors_allowed: boolean | null;
+  guardian_consent_required: boolean | null;
+  id_required: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,13 +41,17 @@ export function mapEvent(row: EventRow): Event {
     currency: row.currency,
     coverImageUrl: row.cover_image_url,
     content: row.content ?? {},
+    ageCategory: row.age_category ?? "18_plus",
+    minorsAllowed: row.minors_allowed ?? false,
+    guardianConsentRequired: row.guardian_consent_required ?? false,
+    idRequired: row.id_required ?? true,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 const COLS =
-  "id, slug, code, name, presenter, tagline, status, event_date, doors_open_at, venue_name, venue_city, currency, cover_image_url, content, created_at, updated_at";
+  "id, slug, code, name, presenter, tagline, status, event_date, doors_open_at, venue_name, venue_city, currency, cover_image_url, content, age_category, minors_allowed, guardian_consent_required, id_required, created_at, updated_at";
 
 /** Public homepage grid: published + coming_soon events, soonest first. */
 export async function getVisibleEvents(supabase: SupabaseClient): Promise<Event[]> {
@@ -106,6 +114,10 @@ export interface EventInput {
   currency?: string;
   coverImageUrl?: string | null;
   content?: EventContent;
+  ageCategory?: AgeCategory;
+  minorsAllowed?: boolean;
+  guardianConsentRequired?: boolean;
+  idRequired?: boolean;
 }
 
 function toRow(input: Partial<EventInput>) {
@@ -123,6 +135,11 @@ function toRow(input: Partial<EventInput>) {
   if (input.currency !== undefined) row.currency = input.currency;
   if (input.coverImageUrl !== undefined) row.cover_image_url = input.coverImageUrl;
   if (input.content !== undefined) row.content = input.content;
+  if (input.ageCategory !== undefined) row.age_category = input.ageCategory;
+  if (input.minorsAllowed !== undefined) row.minors_allowed = input.minorsAllowed;
+  if (input.guardianConsentRequired !== undefined)
+    row.guardian_consent_required = input.guardianConsentRequired;
+  if (input.idRequired !== undefined) row.id_required = input.idRequired;
   return row;
 }
 

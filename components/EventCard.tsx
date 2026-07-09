@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarDays, MapPin, ArrowUpRight, Lock } from "lucide-react";
 import type { Event } from "@/lib/types";
 import { formatEventDate } from "@/lib/format";
+import { AgeBadge } from "./AgeBadge";
 
 /** A single glowing event card for the NovaLabs homepage grid. */
 export function EventCard({ event }: { event: Event }) {
@@ -59,6 +60,10 @@ export function EventCard({ event }: { event: Event }) {
             {venue}
           </p>
         )}
+      </div>
+
+      <div className="relative mt-4">
+        <AgeBadge category={event.ageCategory} />
       </div>
 
       <div className="relative mt-8 flex items-center justify-between pt-2">

@@ -6,6 +6,7 @@
 // ============================================================================
 
 export type EventStatus = "draft" | "coming_soon" | "published" | "archived";
+export type AgeCategory = "all_ages" | "13_plus" | "16_plus" | "18_plus";
 export type TicketTypeStatus = "active" | "hidden";
 export type OrderStatus = "created" | "paid" | "failed" | "expired";
 export type TicketStatus = "confirmed" | "checked_in" | "cancelled";
@@ -32,6 +33,11 @@ export interface Event {
   currency: string; // e.g. "INR"
   coverImageUrl: string | null;
   content: EventContent;
+  // Age & entry policy (per-event, organizer-configurable)
+  ageCategory: AgeCategory;
+  minorsAllowed: boolean;
+  guardianConsentRequired: boolean;
+  idRequired: boolean;
   createdAt: string;
   updatedAt: string;
 }
