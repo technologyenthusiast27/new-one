@@ -28,7 +28,7 @@ insert into public.events (
       jsonb_build_object('title','Photography','body','Roaming photographers capturing the night — relive it the morning after.')
     ),
     'lineup', jsonb_build_array(
-      jsonb_build_object('time','7:00 PM','title','Doors Open','subtitle','Welcome drinks & warm-up sets'),
+      jsonb_build_object('time','12:00 PM','title','Doors Open','subtitle','Welcome drinks & warm-up sets'),
       jsonb_build_object('time','8:30 PM','title','Opening Set','subtitle','Deep house & mellow grooves'),
       jsonb_build_object('time','10:00 PM','title','Prime Time','subtitle','Headline energy peak'),
       jsonb_build_object('time','12:00 AM','title','Afterglow','subtitle','Melodic techno till late'),
@@ -40,7 +40,7 @@ insert into public.events (
       jsonb_build_object('q','How do I receive my ticket?','a','Instantly. After payment you get a digital QR ticket on screen and by email — just show the QR at the door.'),
       jsonb_build_object('q','Which payment methods are accepted?','a','All major cards, UPI, netbanking and wallets via Razorpay — India''s trusted payment gateway.'),
       jsonb_build_object('q','Can I get a refund?','a','Tickets are non-refundable, but they are transferable — anyone presenting a valid QR may enter.'),
-      jsonb_build_object('q','What time should I arrive?','a','Doors open at 7:00 PM. Arrive early for the smoothest entry and to catch the opening sets.')
+      jsonb_build_object('q','What time should I arrive?','a','Doors open at 12:00 PM. Arrive early for the smoothest entry and to catch the opening sets.')
     )
   )
 )
