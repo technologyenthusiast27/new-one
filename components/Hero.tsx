@@ -2,12 +2,32 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { MapPin, CalendarDays, ArrowRight, Sparkles } from "lucide-react";
-import { EVENT } from "@/lib/passes";
+import type { Event, TicketType } from "@/lib/types";
+import {
+  formatEventDate,
+  formatTime,
+  splitTitle,
+  inr,
+} from "@/lib/format";
 import { AmbientGlow } from "./ui/AmbientGlow";
 import { Countdown } from "./Countdown";
 
-export function Hero() {
+export function Hero({
+  event,
+  ticketTypes,
+}: {
+  event: Event;
+  ticketTypes: TicketType[];
+}) {
   const reduce = useReducedMotion();
+  const { head, tail } = splitTitle(event.name);
+  const minPrice = ticketTypes.length
+    ? Math.min(...ticketTypes.map((t) => t.priceInr))
+    : null;
+  const venue = [event.venueName, event.venueCity].filter(Boolean).join(", ");
+  const dateLine = [formatEventDate(event.eventDate), formatTime(event.doorsOpenAt)]
+    .filter(Boolean)
+    .join(" · ");
 
   const container = {
     hidden: {},
@@ -55,7 +75,7 @@ export function Hero() {
         <motion.div variants={item} className="mb-7 flex justify-center">
           <span className="section-eyebrow rounded-full glass px-4 py-1.5">
             <Sparkles className="h-3.5 w-3.5" />
-            {EVENT.presenter} presents
+            {event.presenter} presents
           </span>
         </motion.div>
 
@@ -63,35 +83,42 @@ export function Hero() {
           variants={item}
           className="font-display text-[15vw] font-semibold leading-[0.92] tracking-tight sm:text-7xl md:text-8xl"
         >
-          <span className="block text-gradient">HOUSE OF</span>
-          <span className="block text-gradient-violet italic">BALLOONS</span>
+          {head && <span className="block text-gradient">{head}</span>}
+          <span className="block text-gradient-violet italic">{tail}</span>
         </motion.h1>
 
-        <motion.p
-          variants={item}
-          className="mx-auto mt-7 max-w-xl text-balance text-base text-neutral-300 sm:text-lg"
-        >
-          {EVENT.tagline} One night. Endless euphoria. An immersive audio-visual
-          experience crafted for those who live for the moment.
-        </motion.p>
+        {event.tagline && (
+          <motion.p
+            variants={item}
+            className="mx-auto mt-7 max-w-xl text-balance text-base text-neutral-300 sm:text-lg"
+          >
+            {event.tagline}
+          </motion.p>
+        )}
 
         <motion.div
           variants={item}
           className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-neutral-300"
         >
-          <span className="inline-flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-violet-soft" />
-            {EVENT.date} · {EVENT.doorsOpen}
-          </span>
-          <span className="hidden h-4 w-px bg-white/15 sm:block" />
-          <span className="inline-flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-violet-soft" />
-            {EVENT.venue}, {EVENT.city}
-          </span>
+          {dateLine && (
+            <span className="inline-flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-violet-soft" />
+              {dateLine}
+            </span>
+          )}
+          {dateLine && venue && (
+            <span className="hidden h-4 w-px bg-white/15 sm:block" />
+          )}
+          {venue && (
+            <span className="inline-flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-violet-soft" />
+              {venue}
+            </span>
+          )}
         </motion.div>
 
         <motion.div variants={item} className="mt-10 flex justify-center">
-          <Countdown />
+          <Countdown target={event.eventDate} />
         </motion.div>
 
         <motion.div
@@ -111,7 +138,8 @@ export function Hero() {
           variants={item}
           className="mt-6 text-xs text-neutral-500"
         >
-          Passes from {EVENT.currency}999 · Limited capacity · 18+ event
+          {minPrice != null && <>Passes from {inr(minPrice)} · </>}
+          Limited capacity · 18+ event
         </motion.p>
       </motion.div>
 

@@ -1,7 +1,7 @@
 import { Instagram, Twitter, Youtube } from "lucide-react";
-import { EVENT } from "@/lib/passes";
+import type { Event } from "@/lib/types";
 
-export function Footer() {
+export function Footer({ event }: { event: Event }) {
   return (
     <footer className="relative border-t border-white/10 bg-charcoal-950/60">
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8">
@@ -12,11 +12,11 @@ export function Footer() {
                 <span className="text-base">🎈</span>
               </span>
               <span className="font-display text-lg font-semibold text-white">
-                {EVENT.name}
+                {event.name}
               </span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-neutral-400">
-              {EVENT.tagline} Presented by {EVENT.presenter}.
+              {event.tagline ? `${event.tagline} ` : ""}Presented by {event.presenter}.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-8 text-xs text-neutral-500 sm:flex-row">
-          <p>© {new Date().getFullYear()} {EVENT.presenter}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {event.presenter}. All rights reserved.</p>
           <p className="flex items-center gap-4">
             <a href="#" className="hover:text-neutral-300">Terms</a>
             <a href="#" className="hover:text-neutral-300">Privacy</a>

@@ -1,35 +1,39 @@
 import { NextResponse } from "next/server";
-import { updateTicketStatus } from "@/lib/store";
-import { isAuthorized } from "@/lib/auth";
+import { createClient, getAdminProfile } from "@/lib/supabase/server";
+import { updateTicketStatus } from "@/lib/tickets";
 import type { TicketStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: TicketStatus[] = ["confirmed", "checked-in", "cancelled"];
+const ALLOWED: TicketStatus[] = ["confirmed", "checked_in", "cancelled"];
 
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const admin = await getAdminProfile();
+  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  let status: TicketStatus;
+  let body: { status?: string };
   try {
-    ({ status } = (await req.json()) as { status: TicketStatus });
+    body = (await req.json()) as { status?: string };
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!ALLOWED.includes(status)) {
+  const status = body.status as TicketStatus;
+  if (!status || !ALLOWED.includes(status)) {
     return NextResponse.json({ error: "Invalid status." }, { status: 400 });
   }
 
-  const updated = await updateTicketStatus(params.id, status);
-  if (!updated) {
-    return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
+  try {
+    const supabase = createClient();
+    // checked_in_by is the acting admin's profile id (audit trail).
+    const ticket = await updateTicketStatus(supabase, params.id, status, admin.id);
+    if (!ticket) return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
+    return NextResponse.json({ ticket });
+  } catch (err) {
+    console.error("[admin/tickets PATCH] failed:", err);
+    return NextResponse.json({ error: "Could not update the ticket." }, { status: 500 });
   }
-
-  return NextResponse.json({ ticket: updated });
 }

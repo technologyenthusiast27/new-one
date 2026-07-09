@@ -23,7 +23,10 @@ export interface OrderResult {
  * Create a Razorpay order. Falls back to a demo order id when no
  * credentials are set, so the whole booking flow works out of the box.
  */
-export async function createOrder(amountInInr: number): Promise<OrderResult> {
+export async function createOrder(
+  amountInInr: number,
+  receiptPrefix = "nl",
+): Promise<OrderResult> {
   const amount = Math.round(amountInInr * 100); // paise
   if (!razorpayConfigured || !client) {
     return {
@@ -37,7 +40,7 @@ export async function createOrder(amountInInr: number): Promise<OrderResult> {
   const order = await client.orders.create({
     amount,
     currency: "INR",
-    receipt: `hob_${crypto.randomBytes(4).toString("hex")}`,
+    receipt: `${receiptPrefix}_${crypto.randomBytes(4).toString("hex")}`,
   });
 
   return {

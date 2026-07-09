@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-// Target: the event date. Kept in sync with EVENT.date in lib/passes.ts.
-const TARGET = new Date("2026-12-20T19:00:00+05:30").getTime();
-
 interface TimeLeft {
   days: number;
   hours: number;
@@ -12,8 +9,8 @@ interface TimeLeft {
   seconds: number;
 }
 
-function compute(): TimeLeft {
-  const diff = Math.max(0, TARGET - Date.now());
+function compute(target: number): TimeLeft {
+  const diff = Math.max(0, target - Date.now());
   return {
     days: Math.floor(diff / 86400000),
     hours: Math.floor((diff / 3600000) % 24),
@@ -26,14 +23,16 @@ function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
 
-export function Countdown() {
+/** Live countdown to `target` (an ISO timestamp, e.g. event.eventDate). */
+export function Countdown({ target }: { target: string }) {
   const [time, setTime] = useState<TimeLeft | null>(null);
 
   useEffect(() => {
-    setTime(compute());
-    const id = setInterval(() => setTime(compute()), 1000);
+    const ts = new Date(target).getTime();
+    setTime(compute(ts));
+    const id = setInterval(() => setTime(compute(ts)), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [target]);
 
   const units: { label: string; value: number }[] = [
     { label: "Days", value: time?.days ?? 0 },

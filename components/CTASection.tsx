@@ -1,8 +1,10 @@
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
-import { EVENT } from "@/lib/passes";
+import type { Event } from "@/lib/types";
+import { formatEventDate } from "@/lib/format";
 import { Reveal } from "./ui/Reveal";
 
-export function CTASection() {
+export function CTASection({ event }: { event: Event }) {
+  const venue = [event.venueName, event.venueCity].filter(Boolean).join(", ");
   return (
     <section className="relative mx-auto max-w-7xl px-5 pb-24 sm:px-8 sm:pb-32">
       <Reveal>
@@ -19,13 +21,15 @@ export function CTASection() {
           <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-neutral-300">
             <span className="inline-flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-violet-soft" />
-              {EVENT.date}
+              {formatEventDate(event.eventDate)}
             </span>
-            <span className="hidden h-4 w-px bg-white/15 sm:block" />
-            <span className="inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-violet-soft" />
-              {EVENT.venue}, {EVENT.city}
-            </span>
+            {venue && <span className="hidden h-4 w-px bg-white/15 sm:block" />}
+            {venue && (
+              <span className="inline-flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-violet-soft" />
+                {venue}
+              </span>
+            )}
           </div>
           <div className="mt-9 flex justify-center">
             <a href="#passes" className="btn-primary">

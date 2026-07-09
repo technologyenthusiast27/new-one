@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Ticket } from "lucide-react";
-import { EVENT } from "@/lib/passes";
+import type { Event } from "@/lib/types";
 
 const LINKS = [
   { href: "#experience", label: "Experience" },
@@ -12,7 +12,7 @@ const LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export function Navbar() {
+export function Navbar({ event }: { event: Event }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -43,10 +43,10 @@ export function Navbar() {
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-display text-sm font-semibold tracking-wide text-white">
-              {EVENT.name}
+              {event.name}
             </span>
             <span className="text-[10px] uppercase tracking-[0.2em] text-violet-soft/80">
-              {EVENT.presenter}
+              {event.presenter}
             </span>
           </span>
         </a>

@@ -1,15 +1,13 @@
+import type { Event } from "@/lib/types";
+import { formatTime } from "@/lib/format";
 import { Reveal } from "./ui/Reveal";
-import { EVENT } from "@/lib/passes";
 
-const SETS = [
-  { time: "7:00 PM", act: "Doors & Welcome", role: "Arrival cocktails" },
-  { time: "8:30 PM", act: "AURELIA", role: "Opening · melodic house" },
-  { time: "10:00 PM", act: "NOX & KADEN", role: "B2B · afro / progressive" },
-  { time: "11:30 PM", act: "THE HEADLINER", role: "Special guest — TBA" },
-  { time: "1:00 AM", act: "VELVET ROOMS", role: "After-hours · VIP lounge" },
-];
+export function Lineup({ event }: { event: Event }) {
+  const sets = event.content.lineup ?? [];
+  if (sets.length === 0) return null;
 
-export function Lineup() {
+  const doors = formatTime(event.doorsOpenAt);
+
   return (
     <section id="lineup" className="relative overflow-hidden py-24 sm:py-32">
       <div className="mx-auto grid max-w-7xl gap-14 px-5 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
@@ -19,9 +17,9 @@ export function Lineup() {
             A set that <span className="text-gradient-violet italic">never dips</span>
           </h2>
           <p className="mt-5 max-w-md text-neutral-400">
-            Five acts, one continuous journey — engineered to peak exactly when
-            you do. Doors at {EVENT.doorsOpen}; the room doesn&apos;t stop until
-            the sun threatens to.
+            {sets.length} moments, one continuous journey — engineered to peak
+            exactly when you do.{doors ? ` Doors at ${doors};` : ""} the room
+            doesn&apos;t stop until the sun threatens to.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {["Melodic House", "Afro House", "Progressive", "After-hours"].map((g) => (
@@ -38,21 +36,21 @@ export function Lineup() {
         <Reveal delay={0.1}>
           <div className="rounded-3xl glass p-3 sm:p-4">
             <ul>
-              {SETS.map((s, i) => (
+              {sets.map((s, i) => (
                 <li
-                  key={s.act}
+                  key={`${s.time}-${s.title}`}
                   className={`group flex items-center gap-5 rounded-2xl px-4 py-4 transition-colors hover:bg-white/[0.04] sm:px-5 ${
-                    i !== SETS.length - 1 ? "border-b border-white/[0.06]" : ""
+                    i !== sets.length - 1 ? "border-b border-white/[0.06]" : ""
                   }`}
                 >
                   <span className="w-20 shrink-0 font-display text-sm tabular-nums text-violet-soft sm:w-24 sm:text-base">
                     {s.time}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-lg font-semibold text-white">
-                      {s.act}
-                    </p>
-                    <p className="truncate text-sm text-neutral-400">{s.role}</p>
+                    <p className="truncate text-lg font-semibold text-white">{s.title}</p>
+                    {s.subtitle && (
+                      <p className="truncate text-sm text-neutral-400">{s.subtitle}</p>
+                    )}
                   </div>
                   <span className="h-2 w-2 shrink-0 rounded-full bg-violet-glow/40 transition-all group-hover:bg-violet-glow group-hover:shadow-glow" />
                 </li>

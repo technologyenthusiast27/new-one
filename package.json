@@ -1,28 +1,27 @@
 {
-  "name": "house-of-balloons",
+  "name": "novalabs-club",
   "version": "1.0.0",
   "private": true,
-  "description": "HOUSE OF BALLOONS — premium event booking experience, presented by Wolves Production.",
+  "description": "NovaLabs.club — a multi-event ticketing platform (Next.js, Supabase, Razorpay).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^5.18.0",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.2",
     "framer-motion": "^11.3.19",
+    "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.417.0",
     "next": "14.2.5",
     "nodemailer": "^6.9.14",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.11",
@@ -34,7 +33,6 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5",
     "postcss": "^8.4.40",
-    "prisma": "^5.18.0",
     "tailwindcss": "^3.4.7",
     "typescript": "^5.5.4"
   }

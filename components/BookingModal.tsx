@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Minus, Plus, ShieldCheck, Users } from "lucide-react";
-import type { Pass } from "@/lib/types";
-import { EVENT } from "@/lib/passes";
+import type { Event, TicketType } from "@/lib/types";
+import { inr } from "@/lib/format";
 
 declare global {
   interface Window {
@@ -26,13 +26,12 @@ function loadRazorpayScript(): Promise<boolean> {
 }
 
 interface BookingModalProps {
-  pass: Pass | null;
+  event: Event;
+  ticketType: TicketType | null;
   onClose: () => void;
 }
 
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
-
-export function BookingModal({ pass, onClose }: BookingModalProps) {
+export function BookingModal({ event, ticketType, onClose }: BookingModalProps) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -44,28 +43,29 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
     setForm({ name: "", email: "", phone: "" });
     setError(null);
     setLoading(false);
-  }, [pass]);
+  }, [ticketType]);
 
   // Lock body scroll while open
   useEffect(() => {
-    if (pass) {
+    if (ticketType) {
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = "";
       };
     }
-  }, [pass]);
+  }, [ticketType]);
 
-  if (!pass) return null;
+  if (!ticketType) return null;
 
-  const total = pass.price * quantity;
-  const totalSeats = pass.seats * quantity;
+  const maxQty = ticketType.maxQtyPerOrder;
+  const total = ticketType.priceInr * quantity;
+  const totalSeats = ticketType.seatsPerTicket * quantity;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!pass) return;
+    if (!ticketType) return;
     if (form.name.trim().length < 2) return setError("Please enter your full name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       return setError("Please enter a valid email address.");
@@ -74,27 +74,26 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
 
     setLoading(true);
     try {
-      // 1. Create the order
-      const orderRes = await fetch("/api/razorpay/order", {
+      // 1. Create the order (amount is computed server-side from the DB).
+      const orderRes = await fetch(`/api/events/${event.slug}/order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passType: pass.id, quantity, ...form }),
+        body: JSON.stringify({
+          ticketTypeCode: ticketType.code,
+          quantity,
+          ...form,
+        }),
       });
       const order = await orderRes.json();
       if (!orderRes.ok) throw new Error(order.error || "Could not start checkout.");
 
+      // 2. Verify: the browser sends only the payment proof — nothing about
+      // price/qty/type, which the server reads from the stored order.
       const finalize = async (paymentId: string, signature: string) => {
-        const verifyRes = await fetch("/api/razorpay/verify", {
+        const verifyRes = await fetch(`/api/events/${event.slug}/verify`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: order.orderId,
-            paymentId,
-            signature,
-            passType: pass.id,
-            quantity,
-            ...form,
-          }),
+          body: JSON.stringify({ orderId: order.orderId, paymentId, signature }),
         });
         const result = await verifyRes.json();
         if (!verifyRes.ok) throw new Error(result.error || "Verification failed.");
@@ -116,8 +115,8 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
         key: order.keyId,
         amount: order.amount,
         currency: order.currency,
-        name: EVENT.name,
-        description: `${pass.name} Pass × ${quantity}`,
+        name: event.name,
+        description: `${ticketType.name} Pass × ${quantity}`,
         order_id: order.orderId,
         prefill: { name: form.name, email: form.email, contact: form.phone },
         theme: { color: "#8b5cf6" },
@@ -161,7 +160,7 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
           className="relative w-full max-w-md overflow-hidden rounded-t-3xl glass-strong p-6 sm:rounded-3xl sm:p-8"
           role="dialog"
           aria-modal="true"
-          aria-label={`Book ${pass.name} pass`}
+          aria-label={`Book ${ticketType.name} pass`}
         >
           <button
             type="button"
@@ -173,8 +172,10 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
           </button>
 
           <span className="section-eyebrow">Checkout</span>
-          <h3 className="mt-2 text-2xl font-semibold">{pass.name} Pass</h3>
-          <p className="mt-1 text-sm text-neutral-400">{pass.tagline}</p>
+          <h3 className="mt-2 text-2xl font-semibold">{ticketType.name} Pass</h3>
+          {ticketType.tagline && (
+            <p className="mt-1 text-sm text-neutral-400">{ticketType.tagline}</p>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <Field
@@ -224,14 +225,14 @@ export function BookingModal({ pass, onClose }: BookingModalProps) {
                 <button
                   type="button"
                   aria-label="Increase quantity"
-                  onClick={() => setQuantity((q) => Math.min(20, q + 1))}
+                  onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                   className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 text-white transition-colors hover:bg-white/5 disabled:opacity-40"
-                  disabled={quantity >= 20}
+                  disabled={quantity >= maxQty}
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              {pass.seats > 1 && (
+              {ticketType.seatsPerTicket > 1 && (
                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-neutral-400">
                   <Users className="h-3.5 w-3.5 text-violet-soft" />
                   Admits {totalSeats} guests in total

@@ -3,37 +3,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
+import type { Event } from "@/lib/types";
 import { Reveal } from "./ui/Reveal";
 
-const FAQS = [
-  {
-    q: "How do I receive my ticket?",
-    a: "The moment your payment is confirmed, a digital ticket with a unique QR code is generated and emailed to you. You can also open it any time from the confirmation page — just show the QR at the door.",
-  },
-  {
-    q: "What does the Group pass include?",
-    a: "One Group pass admits five guests for ₹4,999 — that's ₹1,000 per head. A single QR admits the whole group, so you enter together via the fast-track lane.",
-  },
-  {
-    q: "What's the difference with VIP?",
-    a: "VIP gives you priority fast-track entry, access to an exclusive lounge and viewing deck, a dedicated premium bar, two complimentary drinks and an event keepsake.",
-  },
-  {
-    q: "Is the payment secure?",
-    a: "Yes. Payments are processed by Razorpay with bank-grade encryption. We never see or store your card details.",
-  },
-  {
-    q: "Can I get a refund?",
-    a: "Passes are non-refundable but fully transferable up until check-in. Simply forward your QR ticket to whoever is attending in your place.",
-  },
-  {
-    q: "Is there an age limit?",
-    a: "House of Balloons is a strictly 18+ event. Please carry a valid government photo ID — it will be checked at entry.",
-  },
-];
-
-export function FAQ() {
+export function FAQ({ event }: { event: Event }) {
+  const faqs = event.content.faq ?? [];
   const [open, setOpen] = useState<number | null>(0);
+
+  if (faqs.length === 0) return null;
 
   return (
     <section id="faq" className="relative mx-auto max-w-3xl px-5 py-24 sm:px-8 sm:py-32">
@@ -45,7 +22,7 @@ export function FAQ() {
       </Reveal>
 
       <div className="mt-14 space-y-3">
-        {FAQS.map((item, i) => {
+        {faqs.map((item, i) => {
           const isOpen = open === i;
           return (
             <Reveal key={item.q} delay={i * 0.05}>

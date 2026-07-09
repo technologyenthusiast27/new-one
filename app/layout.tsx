@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Jost } from "next/font/google";
 import "./globals.css";
-import { EVENT } from "@/lib/passes";
 
 const display = Bodoni_Moda({
   subsets: ["latin"],
@@ -20,21 +19,15 @@ const sans = Jost({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: `${EVENT.name} — presented by ${EVENT.presenter}`,
-    template: `%s · ${EVENT.name}`,
+    default: "NovaLabs — Immersive Events & Ticketing",
+    template: "%s · NovaLabs",
   },
-  description: `${EVENT.tagline} ${EVENT.date} at ${EVENT.venue}, ${EVENT.city}. Book your Normal, VIP or Group pass.`,
-  keywords: [
-    "House of Balloons",
-    "Wolves Production",
-    "event tickets",
-    "music festival",
-    "VIP passes",
-    EVENT.city,
-  ],
+  description:
+    "NovaLabs curates cinematic, unforgettable events. Discover the lineup and book your pass — instant QR tickets, secure payments.",
+  keywords: ["NovaLabs", "events", "tickets", "nightlife", "music", "experiences"],
   openGraph: {
-    title: `${EVENT.name} — presented by ${EVENT.presenter}`,
-    description: `${EVENT.tagline} ${EVENT.date}.`,
+    title: "NovaLabs — Immersive Events & Ticketing",
+    description: "Discover cinematic events and book your pass in seconds.",
     type: "website",
   },
   robots: { index: true, follow: true },

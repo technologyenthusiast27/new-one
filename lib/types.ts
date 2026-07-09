@@ -1,39 +1,108 @@
-export type PassType = "normal" | "group" | "vip";
+// ============================================================================
+// NovaLabs.club — shared domain types
+// These mirror the Supabase schema (supabase/migrations/0001_init.sql) but use
+// camelCase for the app layer. Row → domain mapping lives in the lib/*.ts
+// data-access modules.
+// ============================================================================
 
-export interface Pass {
-  id: PassType;
-  name: string;
-  price: number; // in INR (rupees)
-  seats: number; // number of people admitted per pass
-  tagline: string;
-  perks: string[];
-  featured?: boolean;
+export type EventStatus = "draft" | "coming_soon" | "published" | "archived";
+export type TicketTypeStatus = "active" | "hidden";
+export type OrderStatus = "created" | "paid" | "failed" | "expired";
+export type TicketStatus = "confirmed" | "checked_in" | "cancelled";
+
+/** Structured, per-event marketing content stored in events.content (jsonb). */
+export interface EventContent {
+  experience?: { title: string; body: string }[];
+  lineup?: { time: string; title: string; subtitle?: string }[];
+  faq?: { q: string; a: string }[];
 }
 
-export type TicketStatus = "confirmed" | "checked-in" | "cancelled";
+export interface Event {
+  id: string;
+  slug: string;
+  code: string; // ticket-id prefix, e.g. "HOB"
+  name: string;
+  presenter: string;
+  tagline: string | null;
+  status: EventStatus;
+  eventDate: string; // ISO timestamptz
+  doorsOpenAt: string | null; // ISO
+  venueName: string | null;
+  venueCity: string | null;
+  currency: string; // e.g. "INR"
+  coverImageUrl: string | null;
+  content: EventContent;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketType {
+  id: string;
+  eventId: string;
+  code: string; // event-scoped, e.g. "normal" | "vip" | "group"
+  name: string;
+  priceInr: number;
+  seatsPerTicket: number;
+  tagline: string | null;
+  perks: string[];
+  isFeatured: boolean;
+  sortOrder: number;
+  status: TicketTypeStatus;
+  maxQtyPerOrder: number;
+}
+
+export interface Order {
+  id: string;
+  eventId: string;
+  ticketTypeId: string;
+  razorpayOrderId: string;
+  quantity: number;
+  amountInr: number;
+  currency: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  status: OrderStatus;
+  razorpayPaymentId: string | null;
+  razorpaySignature: string | null;
+  failureReason: string | null;
+  isDemo: boolean;
+  createdAt: string;
+  paidAt: string | null;
+}
 
 export interface Ticket {
-  id: string; // public ticket id, e.g. HOB-VIP-3F7A2C
-  passType: PassType;
-  passName: string;
-  quantity: number; // number of passes purchased
-  seats: number; // total people admitted
-  amount: number; // total paid in INR
-  name: string;
-  email: string;
-  phone: string;
+  id: string; // public id, e.g. NL-HOB-VIP-3F7A2C
+  orderId: string;
+  eventId: string;
+  ticketTypeId: string;
+  ticketTypeName: string;
+  ticketTypeCode: string;
+  quantity: number;
+  seats: number;
+  amountInr: number;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
   status: TicketStatus;
-  createdAt: string; // ISO
-  checkedInAt?: string; // ISO
-  paymentId?: string;
-  orderId?: string;
-  demo?: boolean;
+  createdAt: string;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+  isDemo: boolean;
 }
 
+/** Payload the booking modal sends to POST /api/events/[slug]/order. */
 export interface CreateOrderPayload {
-  passType: PassType;
+  ticketTypeCode: string;
   quantity: number;
   name: string;
   email: string;
   phone: string;
+}
+
+/** Payload the browser sends to POST /api/events/[slug]/verify. */
+export interface VerifyPayload {
+  orderId: string;
+  paymentId: string;
+  signature: string;
 }
