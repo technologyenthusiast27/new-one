@@ -15,10 +15,10 @@ insert into public.events (
   'Wolves Production',
   'A cinematic night of sound, light & indulgence.',
   'published',
-  '2026-12-20T19:00:00+05:30',
-  '2026-12-20T19:00:00+05:30',
+  '2026-07-26T19:00:00+05:30',
+  '2026-07-26T19:00:00+05:30',
   'The Grand Pavilion',
-  'Mumbai, India',
+  'Hyderabad, Telangana, India',
   'INR',
   jsonb_build_object(
     'experience', jsonb_build_array(
