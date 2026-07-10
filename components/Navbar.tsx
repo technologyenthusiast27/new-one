@@ -8,7 +8,6 @@ import type { Event } from "@/lib/types";
 const LINKS = [
   { href: "#experience", label: "Experience" },
   { href: "#passes", label: "Passes" },
-  { href: "#lineup", label: "Lineup" },
   { href: "#faq", label: "FAQ" },
 ];
 

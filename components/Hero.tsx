@@ -11,7 +11,6 @@ import {
 } from "@/lib/format";
 import { AmbientGlow } from "./ui/AmbientGlow";
 import { Countdown } from "./Countdown";
-import { AgeBadge } from "./AgeBadge";
 
 export function Hero({
   event,
@@ -116,8 +115,6 @@ export function Hero({
               {venue}
             </span>
           )}
-          <span className="hidden h-4 w-px bg-white/15 sm:block" />
-          <AgeBadge category={event.ageCategory} />
         </motion.div>
 
         <motion.div variants={item} className="mt-10 flex justify-center">
@@ -142,7 +139,7 @@ export function Hero({
           className="mt-6 text-xs text-neutral-500"
         >
           {minPrice != null && <>Passes from {inr(minPrice)} · </>}
-          Limited capacity · 18+ event
+          Limited capacity
         </motion.p>
       </motion.div>
 

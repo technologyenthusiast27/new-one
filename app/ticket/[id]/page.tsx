@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Users, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Users, CheckCircle2 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTicket } from "@/lib/tickets";
 import { getEventById } from "@/lib/events";
 import { generateQrDataUrl } from "@/lib/qr";
 import { inr, formatEventDate, formatTime } from "@/lib/format";
-import { ageCategoryLabel } from "@/lib/age";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { TicketReveal } from "@/components/TicketReveal";
 
@@ -155,11 +154,6 @@ export default async function TicketPage({
                         {venue}
                       </p>
                     )}
-                    <p className="flex items-center gap-2.5">
-                      <ShieldAlert className="h-4 w-4 text-violet-soft" />
-                      Age requirement: {ageCategoryLabel(event.ageCategory)}
-                      {event.idRequired ? " · Carry valid ID" : ""}
-                    </p>
                   </div>
                 </>
               )}

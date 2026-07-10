@@ -4,9 +4,7 @@ import { useState } from "react";
 import { Check, Star, Users, ArrowRight } from "lucide-react";
 import type { Event, TicketType } from "@/lib/types";
 import { inr } from "@/lib/format";
-import { ageCategoryDescription } from "@/lib/age";
 import { Reveal } from "./ui/Reveal";
-import { AgeBadge } from "./AgeBadge";
 import { BookingModal } from "./BookingModal";
 
 export function Passes({
@@ -29,12 +27,6 @@ export function Passes({
           {ticketTypes.length} ways in. Every pass includes a digital QR ticket
           delivered instantly to your inbox.
         </p>
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <AgeBadge category={event.ageCategory} />
-          <span className="text-xs text-neutral-500">
-            {ageCategoryDescription(event.ageCategory)}
-          </span>
-        </div>
       </Reveal>
 
       <div className="mt-16 grid items-stretch gap-6 lg:grid-cols-3">

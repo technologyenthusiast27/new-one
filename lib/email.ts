@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 import type { Event, Ticket } from "./types";
-import { ageCategoryLabel } from "./age";
 
 const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT || 587);
@@ -62,7 +61,6 @@ function ticketEmailHtml(event: Event, ticket: Ticket, qrDataUrl: string): strin
           <tr><td style="padding:6px 0;color:#9ca3af;">Date</td><td style="padding:6px 0;text-align:right;">${fmtDate(event.eventDate)}</td></tr>
           <tr><td style="padding:6px 0;color:#9ca3af;">Doors open</td><td style="padding:6px 0;text-align:right;">${fmtTime(event.doorsOpenAt)}</td></tr>
           <tr><td style="padding:6px 0;color:#9ca3af;">Venue</td><td style="padding:6px 0;text-align:right;">${venue}</td></tr>
-          <tr><td style="padding:6px 0;color:#9ca3af;">Age requirement</td><td style="padding:6px 0;text-align:right;">${ageCategoryLabel(event.ageCategory)}${event.idRequired ? " · carry valid ID" : ""}</td></tr>
           <tr><td style="padding:6px 0;color:#9ca3af;">Amount paid</td><td style="padding:6px 0;text-align:right;color:#ffffff;font-weight:600;">${inr(ticket.amountInr)}</td></tr>
         </table>
       </div>

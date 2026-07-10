@@ -9,9 +9,7 @@ import { Hero } from "@/components/Hero";
 import { Marquee } from "@/components/Marquee";
 import { Experience } from "@/components/Experience";
 import { EventInfo } from "@/components/EventInfo";
-import { EventComplianceInfo } from "@/components/EventComplianceInfo";
 import { Passes } from "@/components/Passes";
-import { Lineup } from "@/components/Lineup";
 import { FAQ } from "@/components/FAQ";
 import { CTASection } from "@/components/CTASection";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -63,9 +61,7 @@ export default async function EventPage({
         <Hero event={event} ticketTypes={ticketTypes} />
         <Marquee />
         <Experience event={event} />
-        <Lineup event={event} />
         <EventInfo event={event} />
-        <EventComplianceInfo event={event} />
         {ticketTypes.length > 0 && (
           <Passes event={event} ticketTypes={ticketTypes} />
         )}

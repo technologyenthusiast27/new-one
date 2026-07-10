@@ -13,7 +13,6 @@ const LEGAL_LINKS = [
   { href: "/legal/terms", label: "Terms & Conditions" },
   { href: "/legal/refund", label: "Refund Policy" },
   { href: "/legal/cookies", label: "Cookie Policy" },
-  { href: "/legal/age-policy", label: "Age Policy" },
   { href: "/legal/community", label: "Community Guidelines" },
 ];
 
@@ -80,7 +79,6 @@ export function SiteFooter() {
           <p className="flex items-center gap-4">
             <Link href="/legal/terms" className="hover:text-neutral-300">Terms</Link>
             <Link href="/legal/privacy" className="hover:text-neutral-300">Privacy</Link>
-            <span>18+ where applicable · Drink responsibly</span>
           </p>
         </div>
       </div>
