@@ -13,6 +13,8 @@ const LEGAL_LINKS = [
   { href: "/legal/terms", label: "Terms & Conditions" },
   { href: "/legal/refund", label: "Refund Policy" },
   { href: "/legal/cookies", label: "Cookie Policy" },
+  { href: "/legal/age-policy", label: "Age Policy" },
+  { href: "/legal/community", label: "Community Guidelines" },
 ];
 
 const COMPANY_LINKS = [

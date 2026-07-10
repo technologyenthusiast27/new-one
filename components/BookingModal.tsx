@@ -4,9 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Minus, Plus, ShieldCheck, Users } from "lucide-react";
-import type { Event, TicketType } from "@/lib/types";
+import type { Event, OrderCompliance, TicketType } from "@/lib/types";
 import { inr } from "@/lib/format";
 import { allowsMinors, ageCategoryLabel } from "@/lib/age";
+import {
+  bookingComplianceRequirements,
+  validateBookingCompliance,
+  ID_TYPES,
+} from "@/lib/compliance";
 import { AgeBadge } from "./AgeBadge";
 
 interface Consents {
@@ -23,6 +28,14 @@ const EMPTY_CONSENTS: Consents = {
   refund: false,
   age: false,
   guardian: false,
+};
+
+const EMPTY_COMPLIANCE: OrderCompliance = {
+  guardianName: "",
+  guardianRelationship: "",
+  guardianContact: "",
+  idAcknowledged: false,
+  idType: "",
 };
 
 declare global {
@@ -54,6 +67,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [consents, setConsents] = useState<Consents>(EMPTY_CONSENTS);
+  const [compliance, setCompliance] = useState<OrderCompliance>(EMPTY_COMPLIANCE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +75,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
     setQuantity(1);
     setForm({ name: "", email: "", phone: "" });
     setConsents(EMPTY_CONSENTS);
+    setCompliance(EMPTY_COMPLIANCE);
     setError(null);
     setLoading(false);
   }, [ticketType]);
@@ -82,15 +97,22 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const totalSeats = ticketType.seatsPerTicket * quantity;
 
   const minorsMayAttend = allowsMinors(event);
+  const req = bookingComplianceRequirements(event);
+  const complianceValid = validateBookingCompliance(event, compliance) === null;
   const allConsented =
     consents.terms &&
     consents.privacy &&
     consents.refund &&
     consents.age &&
-    (!minorsMayAttend || consents.guardian);
+    (!minorsMayAttend || consents.guardian) &&
+    complianceValid;
 
   function toggle(key: keyof Consents) {
     setConsents((c) => ({ ...c, [key]: !c[key] }));
+  }
+
+  function setComp<K extends keyof OrderCompliance>(key: K, value: OrderCompliance[K]) {
+    setCompliance((c) => ({ ...c, [key]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,13 +120,15 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
     setError(null);
 
     if (!ticketType) return;
-    if (!allConsented)
-      return setError("Please accept all the required confirmations to continue.");
     if (form.name.trim().length < 2) return setError("Please enter your full name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       return setError("Please enter a valid email address.");
     if (form.phone.replace(/\D/g, "").length < 8)
       return setError("Please enter a valid phone number.");
+    const complianceError = validateBookingCompliance(event, compliance);
+    if (complianceError) return setError(complianceError);
+    if (!allConsented)
+      return setError("Please accept all the required confirmations to continue.");
 
     setLoading(true);
     try {
@@ -116,6 +140,16 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
           ticketTypeCode: ticketType.code,
           quantity,
           ...form,
+          ...(req.guardian
+            ? {
+                guardianName: compliance.guardianName,
+                guardianRelationship: compliance.guardianRelationship,
+                guardianContact: compliance.guardianContact,
+              }
+            : {}),
+          ...(req.id
+            ? { idAcknowledged: compliance.idAcknowledged, idType: compliance.idType }
+            : {}),
         }),
       });
       const order = await orderRes.json();
@@ -276,6 +310,72 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
                 </p>
               )}
             </div>
+
+            {/* Guardian details — required when the event admits minors and the
+                organizer requires parent/guardian permission. */}
+            {req.guardian && (
+              <fieldset className="space-y-3 rounded-2xl border border-violet-glow/20 bg-violet-glow/[0.04] p-4">
+                <legend className="px-1 text-xs font-medium uppercase tracking-wider text-violet-soft">
+                  Parent / guardian details
+                </legend>
+                <Field
+                  label="Guardian's full name"
+                  id="guardian-name"
+                  value={compliance.guardianName ?? ""}
+                  onChange={(v) => setComp("guardianName", v)}
+                  placeholder="Parent or legal guardian"
+                />
+                <Field
+                  label="Relationship to attendee"
+                  id="guardian-rel"
+                  value={compliance.guardianRelationship ?? ""}
+                  onChange={(v) => setComp("guardianRelationship", v)}
+                  placeholder="e.g. Mother, Father, Legal guardian"
+                />
+                <Field
+                  label="Guardian contact (email or phone)"
+                  id="guardian-contact"
+                  value={compliance.guardianContact ?? ""}
+                  onChange={(v) => setComp("guardianContact", v)}
+                  placeholder="Reachable during the event"
+                />
+              </fieldset>
+            )}
+
+            {/* Government ID — required when the organizer enforces ID at entry. */}
+            {req.id && (
+              <fieldset className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <legend className="px-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                  Government ID
+                </legend>
+                <div>
+                  <label htmlFor="id-type" className="mb-1.5 block text-sm font-medium text-neutral-300">
+                    ID type attendees will carry
+                  </label>
+                  <select
+                    id="id-type"
+                    value={compliance.idType ?? ""}
+                    onChange={(e) => setComp("idType", e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white focus:border-violet-glow/50 focus:outline-none focus:ring-2 focus:ring-violet-glow/25"
+                  >
+                    <option value="">Select an ID type…</option>
+                    {ID_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Consent
+                  id="c-id"
+                  checked={Boolean(compliance.idAcknowledged)}
+                  onChange={() => setComp("idAcknowledged", !compliance.idAcknowledged)}
+                >
+                  I confirm each attendee will carry a valid government photo ID for
+                  verification at entry.
+                </Consent>
+              </fieldset>
+            )}
 
             {/* Required confirmations — the Pay button stays disabled until all
                 are checked (plus guardian consent when the event admits minors). */}

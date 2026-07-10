@@ -6,6 +6,7 @@ import {
   deleteEvent,
   type EventInput,
 } from "@/lib/events";
+import { missingComplianceForPublish } from "@/lib/compliance";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,26 @@ export async function PATCH(
 
   try {
     const supabase = createClient();
+
+    // If this update results in a published event, enforce that mandatory
+    // compliance info is complete — using the merged (existing + patch) state.
+    const effectiveStatus = body.status;
+    const existing = await getEventById(supabase, params.id);
+    if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
+    const willBePublished =
+      (effectiveStatus ?? existing.status) === "published";
+    if (willBePublished) {
+      const effectiveCompliance = body.compliance ?? existing.compliance;
+      const missing = missingComplianceForPublish(effectiveCompliance);
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: `Complete these before publishing: ${missing.join(", ")}.` },
+          { status: 400 },
+        );
+      }
+    }
+
     const event = await updateEvent(supabase, params.id, body);
     if (!event) return NextResponse.json({ error: "Not found." }, { status: 404 });
     return NextResponse.json({ event });

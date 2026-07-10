@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEventBySlug } from "@/lib/events";
 import { getTicketTypeByCode } from "@/lib/ticketTypes";
 import { createOrderRecord } from "@/lib/orders";
+import {
+  validateBookingCompliance,
+  normaliseBookingCompliance,
+} from "@/lib/compliance";
 import type { CreateOrderPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +57,25 @@ export async function POST(
     return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
   }
 
+  // Enforce the event's compliance policy (guardian consent + ID) server-side.
+  const complianceError = validateBookingCompliance(event, {
+    guardianName: body.guardianName,
+    guardianRelationship: body.guardianRelationship,
+    guardianContact: body.guardianContact,
+    idAcknowledged: body.idAcknowledged,
+    idType: body.idType,
+  });
+  if (complianceError) {
+    return NextResponse.json({ error: complianceError }, { status: 400 });
+  }
+  const compliance = normaliseBookingCompliance(event, {
+    guardianName: body.guardianName,
+    guardianRelationship: body.guardianRelationship,
+    guardianContact: body.guardianContact,
+    idAcknowledged: body.idAcknowledged,
+    idType: body.idType,
+  });
+
   // Amount is computed server-side from the DB row only.
   const amount = ticketType.priceInr * qty;
 
@@ -72,6 +95,7 @@ export async function POST(
       buyerEmail: email.trim().toLowerCase(),
       buyerPhone: phone.trim(),
       isDemo: order.demo,
+      compliance,
     });
 
     return NextResponse.json({

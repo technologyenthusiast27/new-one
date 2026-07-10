@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, getAdminProfile } from "@/lib/supabase/server";
 import { listAllEvents, createEvent, type EventInput } from "@/lib/events";
+import { missingComplianceForPublish } from "@/lib/compliance";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,17 @@ export async function POST(req: Request) {
       { error: "slug, code, name, presenter and eventDate are required." },
       { status: 400 },
     );
+  }
+
+  // Block publishing until mandatory compliance info is complete.
+  if (body.status === "published") {
+    const missing = missingComplianceForPublish(body.compliance);
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { error: `Complete these before publishing: ${missing.join(", ")}.` },
+        { status: 400 },
+      );
+    }
   }
 
   try {

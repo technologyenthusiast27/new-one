@@ -14,6 +14,7 @@ import {
 } from "@/lib/tickets";
 import { generateQrDataUrl } from "@/lib/qr";
 import { sendTicketEmail } from "@/lib/email";
+import { validateBookingCompliance } from "@/lib/compliance";
 import type { VerifyPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +77,18 @@ export async function POST(req: Request) {
   const event = await getEventById(supabase, order.eventId);
   if (!event) {
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
+  }
+
+  // Enforce compliance before issuing the ticket: the order must carry the
+  // guardian consent / ID acknowledgement the event requires. This is a
+  // second gate beyond the /order route (defence-in-depth).
+  const complianceError = validateBookingCompliance(event, order.compliance);
+  if (complianceError) {
+    await markOrderFailed(supabase, orderId, "compliance-incomplete");
+    return NextResponse.json(
+      { error: `Ticket cannot be issued: ${complianceError}` },
+      { status: 400 },
+    );
   }
 
   // Read the ticket type once for its snapshot fields (name/code/seats).

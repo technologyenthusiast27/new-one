@@ -18,6 +18,40 @@ export interface EventContent {
   faq?: { q: string; a: string }[];
 }
 
+/**
+ * Organizer-configured compliance info stored in events.compliance (jsonb).
+ * Kept as an open object so new fields (e.g. country-specific rules) can be
+ * added without a schema migration.
+ */
+export interface EventCompliance {
+  entryInstructions?: string;
+  venueRules?: string;
+  safetyGuidelines?: string;
+  itemsAllowed?: string[];
+  itemsProhibited?: string[];
+  accessibilityInfo?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
+/** Compliance fields that must be filled before an event may be published. */
+export const REQUIRED_COMPLIANCE_FIELDS: (keyof EventCompliance)[] = [
+  "entryInstructions",
+  "venueRules",
+  "safetyGuidelines",
+  "emergencyContactName",
+  "emergencyContactPhone",
+];
+
+/** Purchaser compliance capture stored in orders.compliance (jsonb). */
+export interface OrderCompliance {
+  guardianName?: string;
+  guardianRelationship?: string;
+  guardianContact?: string;
+  idAcknowledged?: boolean;
+  idType?: string;
+}
+
 export interface Event {
   id: string;
   slug: string;
@@ -38,6 +72,7 @@ export interface Event {
   minorsAllowed: boolean;
   guardianConsentRequired: boolean;
   idRequired: boolean;
+  compliance: EventCompliance;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,6 +108,7 @@ export interface Order {
   razorpaySignature: string | null;
   failureReason: string | null;
   isDemo: boolean;
+  compliance: OrderCompliance;
   createdAt: string;
   paidAt: string | null;
 }
@@ -104,6 +140,12 @@ export interface CreateOrderPayload {
   name: string;
   email: string;
   phone: string;
+  // Compliance capture (required conditionally based on the event's policy).
+  guardianName?: string;
+  guardianRelationship?: string;
+  guardianContact?: string;
+  idAcknowledged?: boolean;
+  idType?: string;
 }
 
 /** Payload the browser sends to POST /api/events/[slug]/verify. */

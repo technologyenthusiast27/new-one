@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AgeCategory, Event, EventContent, EventStatus } from "./types";
+import type {
+  AgeCategory,
+  Event,
+  EventCompliance,
+  EventContent,
+  EventStatus,
+} from "./types";
 
 // Row shape as stored in Postgres (snake_case).
 interface EventRow {
@@ -21,6 +27,7 @@ interface EventRow {
   minors_allowed: boolean | null;
   guardian_consent_required: boolean | null;
   id_required: boolean | null;
+  compliance: EventCompliance | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +52,7 @@ export function mapEvent(row: EventRow): Event {
     minorsAllowed: row.minors_allowed ?? false,
     guardianConsentRequired: row.guardian_consent_required ?? false,
     idRequired: row.id_required ?? true,
+    compliance: row.compliance ?? {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -121,6 +129,7 @@ export interface EventInput {
   minorsAllowed?: boolean;
   guardianConsentRequired?: boolean;
   idRequired?: boolean;
+  compliance?: EventCompliance;
 }
 
 function toRow(input: Partial<EventInput>) {
@@ -143,6 +152,7 @@ function toRow(input: Partial<EventInput>) {
   if (input.guardianConsentRequired !== undefined)
     row.guardian_consent_required = input.guardianConsentRequired;
   if (input.idRequired !== undefined) row.id_required = input.idRequired;
+  if (input.compliance !== undefined) row.compliance = input.compliance;
   return row;
 }
 
