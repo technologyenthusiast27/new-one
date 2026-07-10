@@ -50,8 +50,11 @@ export function mapEvent(row: EventRow): Event {
   };
 }
 
-const COLS =
-  "id, slug, code, name, presenter, tagline, status, event_date, doors_open_at, venue_name, venue_city, currency, cover_image_url, content, age_category, minors_allowed, guardian_consent_required, id_required, created_at, updated_at";
+// Select all columns rather than an explicit list. This keeps event reads
+// resilient to additive migrations that haven't been applied yet (a missing
+// column would otherwise error the whole query and blank the event grid).
+// mapEvent() defaults any age-policy fields that are absent.
+const COLS = "*";
 
 /** Public homepage grid: published + coming_soon events, soonest first. */
 export async function getVisibleEvents(supabase: SupabaseClient): Promise<Event[]> {
