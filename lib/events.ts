@@ -85,6 +85,27 @@ export async function listAllEvents(supabase: SupabaseClient): Promise<Event[]> 
   return (data as EventRow[]).map(mapEvent);
 }
 
+/**
+ * Events an admin may manage. Super admins see everything; event admins see
+ * only their assigned events. Published events are readable by anyone via RLS,
+ * so this filter (not RLS alone) is what keeps an event admin's dashboard
+ * scoped to their events.
+ */
+export async function listEventsForAdmin(
+  supabase: SupabaseClient,
+  admin: { role: "super_admin" | "event_admin"; eventIds: string[] },
+): Promise<Event[]> {
+  if (admin.role === "super_admin") return listAllEvents(supabase);
+  if (admin.eventIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("events")
+    .select(COLS)
+    .in("id", admin.eventIds)
+    .order("event_date", { ascending: true });
+  if (error) throw error;
+  return (data as EventRow[]).map(mapEvent);
+}
+
 export async function getEventBySlug(
   supabase: SupabaseClient,
   slug: string,
@@ -109,6 +130,19 @@ export async function getEventById(
     .maybeSingle();
   if (error) throw error;
   return data ? mapEvent(data as EventRow) : null;
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Resolve an event by its UUID or its slug (for admin deep links). */
+export async function getEventByIdOrSlug(
+  supabase: SupabaseClient,
+  idOrSlug: string,
+): Promise<Event | null> {
+  return UUID_RE.test(idOrSlug)
+    ? getEventById(supabase, idOrSlug)
+    : getEventBySlug(supabase, idOrSlug);
 }
 
 export interface EventInput {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAdminProfile } from "@/lib/supabase/server";
+import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import {
   listTicketTypes,
   createTicketType,
@@ -14,6 +14,8 @@ export async function GET(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   const supabase = createClient();
   const ticketTypes = await listTicketTypes(supabase, params.id);
@@ -26,6 +28,8 @@ export async function POST(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   let body: TicketTypeInput;
   try {

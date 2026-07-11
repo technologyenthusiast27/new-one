@@ -6,15 +6,18 @@ import { CheckCircle2, XCircle, Camera, Loader2 } from "lucide-react";
 type Result =
   | { kind: "idle" }
   | { kind: "checking" }
-  | { kind: "success"; name: string; pass: string; seats: number }
+  | { kind: "success"; name: string; already: boolean }
   | { kind: "error"; message: string };
 
-// Extract the ticket id from a scanned value (a /ticket/<id> URL or a raw id).
-function extractTicketId(text: string): string | null {
+// Extract the attendee ticket code from a scanned value. Attendee QRs encode a
+// `/ticket/a/<code>` URL; the code itself is the per-seat id (NL-…-01). We also
+// accept a bare code so an admin can hand-type it if needed.
+function extractAttendeeCode(text: string): string | null {
   const trimmed = text.trim();
-  const match = trimmed.match(/\/ticket\/([^/?#]+)/i);
+  const match = trimmed.match(/\/ticket\/a\/([^/?#]+)/i);
   if (match) return decodeURIComponent(match[1]);
-  if (/^NL-[A-Z0-9-]+$/i.test(trimmed)) return trimmed;
+  // Per-seat codes look like NL-HOB-VIP-3F7A2C-01 (booking id + 2-digit seat).
+  if (/^NL-[A-Z0-9-]+-\d{2}$/i.test(trimmed)) return trimmed;
   return null;
 }
 
@@ -69,21 +72,21 @@ export function QRScanner({ onChanged }: { onChanged?: () => void }) {
   }, [active]);
 
   async function handleDecode(decoded: string) {
-    const id = extractTicketId(decoded);
-    if (!id) {
+    const code = extractAttendeeCode(decoded);
+    if (!code) {
       setResult({ kind: "error", message: "Unrecognised QR code." });
       return;
     }
     // Debounce repeated scans of the same code.
     const now = Date.now();
-    if (lastRef.current && lastRef.current.id === id && now - lastRef.current.at < 2500) {
+    if (lastRef.current && lastRef.current.id === code && now - lastRef.current.at < 2500) {
       return;
     }
-    lastRef.current = { id, at: now };
+    lastRef.current = { id: code, at: now };
 
     setResult({ kind: "checking" });
     try {
-      const res = await fetch(`/api/admin/tickets/${id}`, {
+      const res = await fetch(`/api/admin/attendees/${encodeURIComponent(code)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "checked_in" }),
@@ -92,13 +95,12 @@ export function QRScanner({ onChanged }: { onChanged?: () => void }) {
       if (!res.ok) {
         throw new Error(data.error || "Check-in failed.");
       }
-      const t = data.ticket;
-      // Reject if the ticket was already checked in before this scan.
+      // `alreadyCheckedIn` means this guest was scanned before — surface it so
+      // the door staff can tell a fresh admit from a re-scan.
       setResult({
         kind: "success",
-        name: t.buyerName,
-        pass: `${t.ticketTypeName} × ${t.quantity}`,
-        seats: t.seats,
+        name: data.attendee?.name ?? "Guest",
+        already: Boolean(data.alreadyCheckedIn),
       });
       onChanged?.();
     } catch (err) {
@@ -148,12 +150,17 @@ export function QRScanner({ onChanged }: { onChanged?: () => void }) {
             )}
             {result.kind === "success" && (
               <div>
-                <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400" />
+                <CheckCircle2
+                  className={`mx-auto h-10 w-10 ${result.already ? "text-amber-400" : "text-emerald-400"}`}
+                />
                 <p className="mt-3 font-semibold text-white">{result.name}</p>
-                <p className="text-sm text-neutral-400">{result.pass}</p>
-                <p className="mt-1 text-xs text-emerald-300">
-                  Checked in · admits {result.seats}
-                </p>
+                {result.already ? (
+                  <p className="mt-1 text-xs text-amber-300">
+                    Already checked in earlier
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-emerald-300">Checked in · admits 1</p>
+                )}
               </div>
             )}
             {result.kind === "error" && (

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAdminProfile } from "@/lib/supabase/server";
+import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import {
   getEventById,
   updateEvent,
@@ -16,6 +16,8 @@ export async function GET(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   const supabase = createClient();
   const event = await getEventById(supabase, params.id);
@@ -29,6 +31,8 @@ export async function PATCH(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   let body: Partial<EventInput>;
   try {
@@ -74,6 +78,8 @@ export async function DELETE(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (admin.role !== "super_admin")
+    return NextResponse.json({ error: "Only a super admin can delete events." }, { status: 403 });
 
   try {
     const supabase = createClient();

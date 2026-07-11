@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAdminProfile } from "@/lib/supabase/server";
+import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import {
   updateTicketType,
   deleteTicketType,
@@ -14,6 +14,8 @@ export async function PATCH(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   let body: Partial<TicketTypeInput>;
   try {
@@ -39,6 +41,8 @@ export async function DELETE(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!canAccessEvent(admin, params.id))
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   try {
     const supabase = createClient();

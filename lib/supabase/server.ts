@@ -31,11 +31,14 @@ export function createClient() {
   );
 }
 
+import type { AdminContext } from "@/lib/types";
+
 /**
- * Returns the current authenticated admin's profile, or null if the caller is
- * not signed in or not an admin. Use this to gate admin API routes.
+ * Returns the current authenticated admin's context (identity, role and the
+ * events they may manage), or null if the caller is not signed in or not an
+ * admin. This is the single server-side authorization source for /admin.
  */
-export async function getAdminProfile() {
+export async function getAdminContext(): Promise<AdminContext | null> {
   const supabase = createClient();
   const {
     data: { user },
@@ -48,11 +51,32 @@ export async function getAdminProfile() {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") return null;
-  return profile as {
-    id: string;
-    email: string | null;
-    full_name: string | null;
-    role: string;
+  if (!profile || (profile.role !== "super_admin" && profile.role !== "event_admin")) {
+    return null;
+  }
+
+  let eventIds: string[] = [];
+  if (profile.role === "event_admin") {
+    const { data: rows } = await supabase
+      .from("event_admins")
+      .select("event_id")
+      .eq("user_id", user.id);
+    eventIds = (rows ?? []).map((r) => r.event_id as string);
+  }
+
+  return {
+    id: profile.id,
+    email: profile.email,
+    fullName: profile.full_name,
+    role: profile.role,
+    eventIds,
   };
 }
+
+/** Whether this admin may manage the given event id. */
+export function canAccessEvent(admin: AdminContext, eventId: string): boolean {
+  return admin.role === "super_admin" || admin.eventIds.includes(eventId);
+}
+
+/** Back-compat alias — existing routes call getAdminProfile(). */
+export const getAdminProfile = getAdminContext;

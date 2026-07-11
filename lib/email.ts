@@ -1,5 +1,10 @@
 import nodemailer from "nodemailer";
-import type { Event, Ticket } from "./types";
+import type { Attendee, Event, Ticket } from "./types";
+
+export interface AttendeeQr {
+  attendee: Attendee;
+  qrDataUrl: string;
+}
 
 const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT || 587);
@@ -38,7 +43,16 @@ function fmtTime(iso: string | null): string {
   });
 }
 
-function ticketEmailHtml(event: Event, ticket: Ticket, qrDataUrl: string): string {
+function attendeeQrBlock(a: AttendeeQr): string {
+  return `
+    <div style="text-align:center;background:#ffffff;border-radius:16px;padding:16px;margin:0 0 14px;">
+      <p style="color:#6d28d9;font-size:13px;font-weight:700;margin:0 0 8px;">${a.attendee.name ?? "Guest"}</p>
+      <img src="${a.qrDataUrl}" alt="Entry QR code" width="180" height="180" style="display:block;margin:0 auto;" />
+      <p style="color:#111827;font-family:monospace;font-size:12px;margin:10px 0 0;letter-spacing:1px;">${a.attendee.ticketCode}</p>
+    </div>`;
+}
+
+function ticketEmailHtml(event: Event, ticket: Ticket, attendees: AttendeeQr[]): string {
   const url = `${siteUrl()}/ticket/${ticket.id}`;
   const venue = [event.venueName, event.venueCity].filter(Boolean).join(", ");
   return `
@@ -52,12 +66,10 @@ function ticketEmailHtml(event: Event, ticket: Ticket, qrDataUrl: string): strin
         <p style="color:#c4b5fd;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;">You're in, ${ticket.buyerName.split(" ")[0]} 🎈</p>
         <h2 style="color:#ffffff;margin:0 0 20px;font-size:20px;">${ticket.ticketTypeName} Pass &middot; ${ticket.quantity} × &middot; ${ticket.seats} guest${ticket.seats > 1 ? "s" : ""}</h2>
 
-        <div style="text-align:center;background:#ffffff;border-radius:16px;padding:18px;margin:0 0 20px;">
-          <img src="${qrDataUrl}" alt="Entry QR code" width="200" height="200" style="display:block;margin:0 auto;" />
-          <p style="color:#111827;font-family:monospace;font-size:14px;margin:12px 0 0;letter-spacing:1px;">${ticket.id}</p>
-        </div>
+        <p style="color:#9ca3af;font-size:13px;margin:0 0 14px;">${attendees.length > 1 ? `Each guest has their own QR — one scan per person:` : `Your entry QR:`}</p>
+        ${attendees.map(attendeeQrBlock).join("")}
 
-        <table style="width:100%;color:#d1d5db;font-size:14px;border-collapse:collapse;">
+        <table style="width:100%;color:#d1d5db;font-size:14px;border-collapse:collapse;margin-top:6px;">
           <tr><td style="padding:6px 0;color:#9ca3af;">Date</td><td style="padding:6px 0;text-align:right;">${fmtDate(event.eventDate)}</td></tr>
           <tr><td style="padding:6px 0;color:#9ca3af;">Doors open</td><td style="padding:6px 0;text-align:right;">${fmtTime(event.doorsOpenAt)}</td></tr>
           <tr><td style="padding:6px 0;color:#9ca3af;">Venue</td><td style="padding:6px 0;text-align:right;">${venue}</td></tr>
@@ -70,7 +82,7 @@ function ticketEmailHtml(event: Event, ticket: Ticket, qrDataUrl: string): strin
       </div>
 
       <p style="color:#6b7280;font-size:12px;text-align:center;line-height:1.6;margin:24px 0 0;">
-        Show the QR code above at the entrance. This ticket admits ${ticket.seats} guest${ticket.seats > 1 ? "s" : ""}.<br/>
+        Show each QR code at the entrance — one per guest. This booking admits ${ticket.seats} guest${ticket.seats > 1 ? "s" : ""}.<br/>
         ${event.name} — presented by ${event.presenter}.
       </p>
     </div>
@@ -89,7 +101,7 @@ export interface EmailResult {
 export async function sendTicketEmail(
   event: Event,
   ticket: Ticket,
-  qrDataUrl: string,
+  attendees: AttendeeQr[],
 ): Promise<EmailResult> {
   if (!emailConfigured) {
     console.info(
@@ -110,7 +122,7 @@ export async function sendTicketEmail(
       from,
       to: ticket.buyerEmail,
       subject: `🎈 Your ${ticket.ticketTypeName} pass for ${event.name}`,
-      html: ticketEmailHtml(event, ticket, qrDataUrl),
+      html: ticketEmailHtml(event, ticket, attendees),
     });
 
     return { sent: true };

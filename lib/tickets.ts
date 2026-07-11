@@ -170,6 +170,7 @@ export interface EventStats {
   totalRevenue: number;
   totalGuests: number;
   checkedIn: number;
+  totalAttendees?: number;
   byTicketType: Record<string, { name: string; count: number; revenue: number }>;
 }
 

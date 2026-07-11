@@ -10,6 +10,34 @@ export type AgeCategory = "all_ages" | "13_plus" | "16_plus" | "18_plus";
 export type TicketTypeStatus = "active" | "hidden";
 export type OrderStatus = "created" | "paid" | "failed" | "expired";
 export type TicketStatus = "confirmed" | "checked_in" | "cancelled";
+export type AdminRole = "super_admin" | "event_admin";
+export type AttendeeStatus = "not_checked_in" | "checked_in";
+
+/** The signed-in admin and the events they may manage. */
+export interface AdminContext {
+  id: string;
+  email: string | null;
+  fullName: string | null;
+  role: AdminRole;
+  /** Event ids this admin may access. For super_admin this is empty and access
+   *  is unrestricted; use `canAccess()` rather than reading this directly. */
+  eventIds: string[];
+}
+
+/** One admittee within a booking — carries its own QR and check-in state. */
+export interface Attendee {
+  id: string;
+  bookingId: string;
+  eventId: string;
+  seatIndex: number;
+  name: string | null;
+  email: string | null;
+  status: AttendeeStatus;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+  ticketCode: string;
+  qrCode: string | null;
+}
 
 /** Structured, per-event marketing content stored in events.content (jsonb). */
 export interface EventContent {

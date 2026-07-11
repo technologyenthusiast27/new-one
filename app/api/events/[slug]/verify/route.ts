@@ -14,6 +14,7 @@ import {
 } from "@/lib/tickets";
 import { generateQrDataUrl } from "@/lib/qr";
 import { sendTicketEmail } from "@/lib/email";
+import { createAttendeesForBooking } from "@/lib/attendees";
 import type { VerifyPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -107,11 +108,24 @@ export async function POST(req: Request) {
       isDemo: order.isDemo,
     });
 
-    // Fire-and-forget email; failure never blocks ticket issuance.
+    // Generate one attendee per seat — each gets its own code + QR.
+    const attendees = await createAttendeesForBooking(supabase, {
+      bookingId: ticket.id,
+      eventId: order.eventId,
+      seats,
+      buyerName: order.buyerName,
+    });
+
+    // Fire-and-forget email carrying a QR per attendee; never blocks issuance.
     let emailSent = false;
     try {
-      const qr = await generateQrDataUrl(`${siteUrl()}/ticket/${ticket.id}`);
-      const res = await sendTicketEmail(event, ticket, qr);
+      const withQr = await Promise.all(
+        attendees.map(async (a) => ({
+          attendee: a,
+          qrDataUrl: await generateQrDataUrl(`${siteUrl()}/ticket/a/${a.ticketCode}`),
+        })),
+      );
+      const res = await sendTicketEmail(event, ticket, withQr);
       emailSent = res.sent;
     } catch (err) {
       console.error("[verify] email failed:", err);

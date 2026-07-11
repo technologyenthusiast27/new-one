@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { CalendarRange, Plus, ArrowUpRight, Radio } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { listAllEvents } from "@/lib/events";
+import { createClient, getAdminContext } from "@/lib/supabase/server";
+import { listEventsForAdmin } from "@/lib/events";
 import { formatEventDate } from "@/lib/format";
 import type { EventStatus } from "@/lib/types";
 
@@ -15,8 +16,11 @@ const STATUS_BADGE: Record<EventStatus, string> = {
 };
 
 export default async function AdminDashboard() {
+  const admin = await getAdminContext();
+  if (!admin) redirect("/admin/login");
+
   const supabase = createClient();
-  const events = await listAllEvents(supabase);
+  const events = await listEventsForAdmin(supabase, admin);
 
   const published = events.filter((e) => e.status === "published").length;
   const upcoming = events.filter(
@@ -30,10 +34,12 @@ export default async function AdminDashboard() {
           <span className="section-eyebrow">Overview</span>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Dashboard</h1>
         </div>
-        <Link href="/admin/events" className="btn-primary">
-          <Plus className="h-4 w-4" />
-          New event
-        </Link>
+        {admin.role === "super_admin" && (
+          <Link href="/admin/events" className="btn-primary">
+            <Plus className="h-4 w-4" />
+            New event
+          </Link>
+        )}
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
