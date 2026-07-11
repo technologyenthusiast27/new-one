@@ -277,7 +277,10 @@ function Bookings({
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {(["all", "confirmed", "checked_in", "cancelled"] as Filter[]).map((f) => (
+          {/* Booking status is confirmed/cancelled only — guest check-in is
+              tracked per attendee (see the n/m chip + expandable rows), so a
+              booking-level "checked in" filter would always be empty. */}
+          {(["all", "confirmed", "cancelled"] as Filter[]).map((f) => (
             <button
               key={f}
               type="button"

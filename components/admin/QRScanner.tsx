@@ -16,8 +16,9 @@ function extractAttendeeCode(text: string): string | null {
   const trimmed = text.trim();
   const match = trimmed.match(/\/ticket\/a\/([^/?#]+)/i);
   if (match) return decodeURIComponent(match[1]);
-  // Per-seat codes look like NL-HOB-VIP-3F7A2C-01 (booking id + 2-digit seat).
-  if (/^NL-[A-Z0-9-]+-\d{2}$/i.test(trimmed)) return trimmed;
+  // Per-seat codes look like NL-HOB-VIP-3F7A2C-01 (booking id + seat suffix,
+  // 2+ digits — matches the server's attendee-code validation).
+  if (/^NL-[A-Z0-9-]+-\d{2,}$/i.test(trimmed)) return trimmed;
   return null;
 }
 

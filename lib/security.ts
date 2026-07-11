@@ -83,6 +83,15 @@ export function rateLimit(
   windowMs: number,
 ): RateLimitResult {
   const now = Date.now();
+
+  // Opportunistically evict expired buckets so the map can't grow unbounded on
+  // a long-lived instance (each distinct IP+route would otherwise leak a key).
+  if (buckets.size > 5000) {
+    for (const [k, b] of buckets) {
+      if (b.resetAt <= now) buckets.delete(k);
+    }
+  }
+
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });
