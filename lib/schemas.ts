@@ -64,7 +64,8 @@ export const renameAttendeesSchema = z.object({
 export const assignAdminSchema = z.object({
   email: z.string().trim().email().max(200),
   fullName: nameString.optional(),
-  password: z.string().min(8).max(200).optional(),
+  // ASVS L2: 12+ chars for humans choosing a password (generated ones are 20).
+  password: z.string().min(12).max(200).optional(),
 });
 
 /** PATCH /api/admin/events/[id]/admins/[userId] — per-admin MFA policy. */
