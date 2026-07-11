@@ -137,6 +137,8 @@ export interface Order {
   failureReason: string | null;
   isDemo: boolean;
   compliance: OrderCompliance;
+  /** Optional per-seat guest names captured at checkout (seat order). */
+  guestNames: (string | null)[];
   createdAt: string;
   paidAt: string | null;
 }
@@ -168,6 +170,8 @@ export interface CreateOrderPayload {
   name: string;
   email: string;
   phone: string;
+  /** Optional per-seat guest names (index 0 = seat 1). Blank entries are ok. */
+  guestNames?: (string | null)[];
   // Compliance capture (required conditionally based on the event's policy).
   guardianName?: string;
   guardianRelationship?: string;

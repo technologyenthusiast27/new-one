@@ -44,8 +44,10 @@ export interface NewAttendee {
 }
 
 /**
- * Create one attendee per seat for a booking. The first seat is named after the
- * buyer; the rest are "Guest N" placeholders the buyer/admin can rename later.
+ * Create one attendee per seat for a booking. Seat names come from the names
+ * captured at checkout (aligned to seat order). When a name is blank we store
+ * null so the UI can render a "Guest #N" placeholder — except seat 1, which
+ * falls back to the buyer's name so the purchaser is always identifiable.
  */
 export async function createAttendeesForBooking(
   supabase: SupabaseClient,
@@ -54,16 +56,25 @@ export async function createAttendeesForBooking(
     eventId: string;
     seats: number;
     buyerName: string;
+    names?: (string | null)[];
   },
 ): Promise<Attendee[]> {
+  const names = params.names ?? [];
   const rows = Array.from({ length: Math.max(1, params.seats) }, (_, i) => {
     const seatIndex = i + 1;
     const code = attendeeCode(params.bookingId, seatIndex);
+    const provided = names[i];
+    const name =
+      provided && provided.trim().length > 0
+        ? provided.trim()
+        : seatIndex === 1
+          ? params.buyerName
+          : null;
     return {
       booking_id: params.bookingId,
       event_id: params.eventId,
       seat_index: seatIndex,
-      name: seatIndex === 1 ? params.buyerName : `Guest ${seatIndex}`,
+      name,
       ticket_code: code,
       qr_code: `/ticket/a/${code}`,
     };
@@ -75,6 +86,27 @@ export async function createAttendeesForBooking(
     .select(COLS);
   if (error) throw error;
   return (data as AttendeeRow[] | null)?.map(mapAttendee) ?? [];
+}
+
+/**
+ * Rename attendees within a booking (purchaser self-service before the event).
+ * Only names are mutable here — never status or codes. Each update is scoped to
+ * the given booking id so one booking's link can't touch another's guests.
+ */
+export async function renameAttendees(
+  supabase: SupabaseClient,
+  bookingId: string,
+  updates: { seatIndex: number; name: string | null }[],
+): Promise<Attendee[]> {
+  for (const u of updates) {
+    const { error } = await supabase
+      .from("attendees")
+      .update({ name: u.name })
+      .eq("booking_id", bookingId)
+      .eq("seat_index", u.seatIndex);
+    if (error) throw error;
+  }
+  return getAttendeesForBooking(supabase, bookingId);
 }
 
 export async function getAttendeesForBooking(

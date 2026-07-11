@@ -60,7 +60,7 @@ export default async function AttendeeTicketPage({
               </h1>
               <div className="mt-4 flex items-center gap-3">
                 <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
-                  {attendee.name ?? "Guest"}
+                  {attendee.name ?? `Guest #${attendee.seatIndex}`}
                 </span>
                 {checkedIn ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-violet-glow/15 px-3 py-1 text-xs font-semibold text-violet-soft ring-1 ring-inset ring-violet-glow/30">

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, getAdminProfile } from "@/lib/supabase/server";
-import { listAllEvents, createEvent, type EventInput } from "@/lib/events";
+import { listEventsForAdmin, createEvent, type EventInput } from "@/lib/events";
 import { missingComplianceForPublish } from "@/lib/compliance";
+import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { logAdminAction } from "@/lib/audit";
+import { clientIp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +13,17 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const supabase = createClient();
-  const events = await listAllEvents(supabase);
+  // Scope the list to the caller: event admins never receive events they are
+  // not assigned to (defence in depth beyond RLS, which allows reading any
+  // published event).
+  const events = await listEventsForAdmin(supabase, admin);
   return NextResponse.json({ events });
 }
 
 export async function POST(req: Request) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (admin.role !== "super_admin")
@@ -48,6 +57,15 @@ export async function POST(req: Request) {
   try {
     const supabase = createClient();
     const event = await createEvent(supabase, body);
+    await logAdminAction({
+      actorId: admin.id,
+      action: "event.create",
+      eventId: event.id,
+      targetType: "event",
+      targetId: event.id,
+      metadata: { slug: event.slug, status: event.status },
+      ip: clientIp(req),
+    });
     return NextResponse.json({ event }, { status: 201 });
   } catch (err) {
     console.error("[admin/events POST] failed:", err);

@@ -492,7 +492,7 @@ function AttendeeList({
                 {a.seatIndex}
               </span>
               <div>
-                <p className="text-sm text-white">{a.name ?? `Guest ${a.seatIndex}`}</p>
+                <p className="text-sm text-white">{a.name ?? `Guest #${a.seatIndex}`}</p>
                 <p className="font-mono text-[11px] text-neutral-500">{a.ticketCode}</p>
               </div>
             </div>

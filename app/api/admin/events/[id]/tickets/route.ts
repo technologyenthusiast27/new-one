@@ -3,6 +3,7 @@ import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/se
 import { listTicketsForEvent, getEventStats } from "@/lib/tickets";
 import { listOrdersForEvent } from "@/lib/orders";
 import { listAttendeesForEvent, getEventCheckinCounts } from "@/lib/attendees";
+import { isUuid } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ export async function GET(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 

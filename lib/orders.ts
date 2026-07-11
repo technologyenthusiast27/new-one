@@ -18,6 +18,7 @@ interface OrderRow {
   failure_reason: string | null;
   is_demo: boolean;
   compliance: OrderCompliance | null;
+  guest_names: (string | null)[] | null;
   created_at: string;
   paid_at: string | null;
 }
@@ -40,6 +41,7 @@ export function mapOrder(row: OrderRow): Order {
     failureReason: row.failure_reason,
     isDemo: row.is_demo,
     compliance: row.compliance ?? {},
+    guestNames: Array.isArray(row.guest_names) ? row.guest_names : [],
     createdAt: row.created_at,
     paidAt: row.paid_at,
   };
@@ -61,10 +63,11 @@ export interface CreateOrderInput {
   buyerPhone: string;
   isDemo: boolean;
   compliance?: OrderCompliance;
+  guestNames?: (string | null)[];
 }
 
-// Postgres "undefined column" error code — used to gracefully degrade when
-// migration 0003 (orders.compliance) hasn't been applied yet.
+// Postgres "undefined column" error code — used to gracefully degrade when an
+// additive migration (0003 compliance / 0006 guest_names) hasn't been applied.
 const UNDEFINED_COLUMN = "42703";
 
 /** Insert a fresh order in the 'created' state. Service-role client. */
@@ -86,17 +89,25 @@ export async function createOrderRecord(
     is_demo: input.isDemo,
   };
 
-  const withCompliance = { ...base, compliance: input.compliance ?? {} };
+  const withExtras = {
+    ...base,
+    compliance: input.compliance ?? {},
+    guest_names: input.guestNames ?? [],
+  };
 
   let { data, error } = await supabase
     .from("orders")
-    .insert(withCompliance)
+    .insert(withExtras)
     .select(COLS)
     .single();
 
-  // If the compliance column doesn't exist yet (0003 not applied), fall back
-  // to inserting without it so the booking flow still succeeds.
-  if (error && (error.code === UNDEFINED_COLUMN || /compliance/i.test(error.message))) {
+  // If an additive column doesn't exist yet, fall back to the base insert so
+  // the booking flow still succeeds.
+  if (
+    error &&
+    (error.code === UNDEFINED_COLUMN ||
+      /compliance|guest_names/i.test(error.message))
+  ) {
     ({ data, error } = await supabase
       .from("orders")
       .insert(base)

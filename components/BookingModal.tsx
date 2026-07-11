@@ -47,6 +47,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [guestNames, setGuestNames] = useState<string[]>([]);
   const [consents, setConsents] = useState<Consents>(EMPTY_CONSENTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +55,19 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   useEffect(() => {
     setQuantity(1);
     setForm({ name: "", email: "", phone: "" });
+    setGuestNames([]);
     setConsents(EMPTY_CONSENTS);
     setError(null);
     setLoading(false);
   }, [ticketType]);
+
+  function setGuestName(index: number, value: string) {
+    setGuestNames((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
 
   // Lock body scroll while open
   useEffect(() => {
@@ -97,6 +107,11 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
     setLoading(true);
     try {
       // 1. Create the order (amount is computed server-side from the DB).
+      // Guest names are optional; send one slot per seat (index 0 = seat 1).
+      const namesPayload =
+        totalSeats > 1
+          ? Array.from({ length: totalSeats }, (_, i) => guestNames[i] ?? "")
+          : undefined;
       const orderRes = await fetch(`/api/events/${event.slug}/order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,6 +119,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
           ticketTypeCode: ticketType.code,
           quantity,
           ...form,
+          guestNames: namesPayload,
         }),
       });
       const order = await orderRes.json();
@@ -261,6 +277,34 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
                 </p>
               )}
             </div>
+
+            {/* Per-guest names — optional. Each guest gets their own QR ticket;
+                names shown on tickets and to door staff. Editable later too. */}
+            {totalSeats > 1 && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-300">
+                  Guest names{" "}
+                  <span className="font-normal text-neutral-500">
+                    (optional — you can edit these later)
+                  </span>
+                </label>
+                <div className="space-y-2">
+                  {Array.from({ length: totalSeats }, (_, i) => (
+                    <input
+                      key={i}
+                      type="text"
+                      value={guestNames[i] ?? ""}
+                      onChange={(e) => setGuestName(i, e.target.value)}
+                      autoComplete="off"
+                      maxLength={80}
+                      aria-label={`Guest ${i + 1} name`}
+                      placeholder={i === 0 ? "Guest 1 (e.g. you)" : `Guest ${i + 1}`}
+                      className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-neutral-500 transition-colors focus:border-violet-glow/50 focus:bg-white/[0.05] focus:outline-none focus:ring-2 focus:ring-violet-glow/25"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Required confirmations — the Pay button stays disabled until all
                 are checked. */}

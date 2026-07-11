@@ -15,7 +15,9 @@ import {
 import { generateQrDataUrl } from "@/lib/qr";
 import { sendTicketEmail } from "@/lib/email";
 import { createAttendeesForBooking } from "@/lib/attendees";
-import type { VerifyPayload } from "@/lib/types";
+import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { verifySchema } from "@/lib/schemas";
+import { rateLimit, clientIp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -24,17 +26,21 @@ function siteUrl(): string {
 }
 
 export async function POST(req: Request) {
-  let body: VerifyPayload;
-  try {
-    body = (await req.json()) as VerifyPayload;
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
+  const rl = rateLimit(`verify:${clientIp(req)}`, 20, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
   }
 
-  const { orderId, paymentId, signature } = body;
-  if (!orderId || !paymentId) {
-    return NextResponse.json({ error: "Missing payment details." }, { status: 400 });
-  }
+  const parsed = await readJson(req, verifySchema);
+  if (!parsed.ok) return parsed.response;
+  const { orderId, paymentId } = parsed.data;
+  const signature = parsed.data.signature ?? "";
 
   const supabase = createAdminClient();
 
@@ -108,12 +114,14 @@ export async function POST(req: Request) {
       isDemo: order.isDemo,
     });
 
-    // Generate one attendee per seat — each gets its own code + QR.
+    // Generate one attendee per seat — each gets its own code + QR. Names come
+    // from the guest names captured at checkout (stored on the order).
     const attendees = await createAttendeesForBooking(supabase, {
       bookingId: ticket.id,
       eventId: order.eventId,
       seats,
       buyerName: order.buyerName,
+      names: order.guestNames,
     });
 
     // Fire-and-forget email carrying a QR per attendee; never blocks issuance.

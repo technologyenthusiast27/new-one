@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CalendarRange, Plus, ArrowUpRight, Radio } from "lucide-react";
 import { createClient, getAdminContext } from "@/lib/supabase/server";
 import { listEventsForAdmin } from "@/lib/events";
+import { eventAdminLandingPath } from "@/lib/adminRoutes";
 import { formatEventDate } from "@/lib/format";
 import type { EventStatus } from "@/lib/types";
 
@@ -20,6 +21,13 @@ export default async function AdminDashboard() {
   if (!admin) redirect("/admin/login");
 
   const supabase = createClient();
+
+  // The cross-event dashboard is super-admin only. Event admins are sent to
+  // their own event (server-side guard mirroring the middleware).
+  if (admin.role !== "super_admin") {
+    redirect(await eventAdminLandingPath(supabase, admin));
+  }
+
   const events = await listEventsForAdmin(supabase, admin);
 
   const published = events.filter((e) => e.status === "published").length;

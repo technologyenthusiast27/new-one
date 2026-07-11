@@ -4,26 +4,33 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEventBySlug } from "@/lib/events";
 import { getTicketTypeByCode } from "@/lib/ticketTypes";
 import { createOrderRecord } from "@/lib/orders";
-import type { CreateOrderPayload } from "@/lib/types";
+import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { createOrderSchema } from "@/lib/schemas";
+import { rateLimit, clientIp, cleanName } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 export async function POST(
   req: Request,
   { params }: { params: { slug: string } },
 ) {
-  let body: CreateOrderPayload;
-  try {
-    body = (await req.json()) as CreateOrderPayload;
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  // CSRF: this endpoint is only ever called from our own checkout UI.
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
+  // Rate limit order creation per IP to blunt abuse / card-testing loops.
+  const rl = rateLimit(`order:${clientIp(req)}`, 12, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
   }
 
-  const { ticketTypeCode, quantity, name, email, phone } = body;
+  const parsed = await readJson(req, createOrderSchema);
+  if (!parsed.ok) return parsed.response;
+  const { ticketTypeCode, quantity, name, email, phone, guestNames } = parsed.data;
+
   const supabase = createAdminClient();
 
   // Resolve the event by slug — must be published to sell.
@@ -38,20 +45,14 @@ export async function POST(
     return NextResponse.json({ error: "Unknown ticket type." }, { status: 400 });
   }
 
-  const qty = Math.max(
-    1,
-    Math.min(ticketType.maxQtyPerOrder, Math.floor(Number(quantity) || 1)),
-  );
+  const qty = Math.max(1, Math.min(ticketType.maxQtyPerOrder, Math.floor(quantity)));
+  const seats = ticketType.seatsPerTicket * qty;
 
-  if (!name || name.trim().length < 2) {
-    return NextResponse.json({ error: "Please enter your full name." }, { status: 400 });
-  }
-  if (!email || !isValidEmail(email)) {
-    return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
-  }
-  if (!phone || phone.replace(/\D/g, "").length < 8) {
-    return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
-  }
+  // Clean and clamp guest names to the actual seat count (defence against
+  // over-long arrays / control characters / oversized strings).
+  const cleanedGuestNames = (guestNames ?? [])
+    .slice(0, seats)
+    .map((n) => cleanName(n));
 
   // Amount is computed server-side from the DB row only.
   const amount = ticketType.priceInr * qty;
@@ -72,6 +73,7 @@ export async function POST(
       buyerEmail: email.trim().toLowerCase(),
       buyerPhone: phone.trim(),
       isDemo: order.demo,
+      guestNames: cleanedGuestNames,
     });
 
     return NextResponse.json({

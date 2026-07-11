@@ -5,6 +5,9 @@ import {
   deleteTicketType,
   type TicketTypeInput,
 } from "@/lib/ticketTypes";
+import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { isUuid, clientIp } from "@/lib/security";
+import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +15,13 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string; typeId: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id) || !isUuid(params.typeId))
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
@@ -26,8 +34,17 @@ export async function PATCH(
 
   try {
     const supabase = createClient();
-    const ticketType = await updateTicketType(supabase, params.typeId, body);
+    // Scoped to the event id → cannot touch another event's type.
+    const ticketType = await updateTicketType(supabase, params.id, params.typeId, body);
     if (!ticketType) return NextResponse.json({ error: "Not found." }, { status: 404 });
+    await logAdminAction({
+      actorId: admin.id,
+      action: "ticket_type.update",
+      eventId: params.id,
+      targetType: "ticket_type",
+      targetId: params.typeId,
+      ip: clientIp(req),
+    });
     return NextResponse.json({ ticketType });
   } catch (err) {
     console.error("[admin/ticket-types PATCH] failed:", err);
@@ -36,17 +53,30 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string; typeId: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id) || !isUuid(params.typeId))
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   try {
     const supabase = createClient();
-    await deleteTicketType(supabase, params.typeId);
+    await deleteTicketType(supabase, params.id, params.typeId);
+    await logAdminAction({
+      actorId: admin.id,
+      action: "ticket_type.delete",
+      eventId: params.id,
+      targetType: "ticket_type",
+      targetId: params.typeId,
+      ip: clientIp(req),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/ticket-types DELETE] failed:", err);

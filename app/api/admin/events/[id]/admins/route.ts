@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { assignAdminSchema } from "@/lib/schemas";
+import { isUuid, clientIp } from "@/lib/security";
+import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +17,8 @@ export async function GET(
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (admin.role !== "super_admin")
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
 
   const supabase = createAdminClient();
   const { data: rows, error } = await supabase
@@ -34,10 +40,6 @@ export async function GET(
   return NextResponse.json({ admins });
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 /**
  * Assign an event admin to this event (super admin only). Creates the user via
  * Supabase Auth if they don't exist yet; otherwise assigns the existing user.
@@ -46,20 +48,20 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (admin.role !== "super_admin")
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
 
-  let body: { email?: string; password?: string; fullName?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-  const email = (body.email ?? "").trim().toLowerCase();
-  if (!email || !isValidEmail(email))
-    return NextResponse.json({ error: "Please enter a valid email." }, { status: 400 });
+  const parsed = await readJson(req, assignAdminSchema);
+  if (!parsed.ok) return parsed.response;
+  const email = parsed.data.email.trim().toLowerCase();
+  const { fullName, password: providedPassword } = parsed.data;
 
   const supabase = createAdminClient();
 
@@ -74,10 +76,7 @@ export async function POST(
   let createdPassword: string | undefined;
 
   if (!userId) {
-    const password =
-      body.password && body.password.length >= 8
-        ? body.password
-        : generatePassword();
+    const password = providedPassword ?? generatePassword();
     const { data: created, error: createErr } =
       await supabase.auth.admin.createUser({
         email,
@@ -93,8 +92,8 @@ export async function POST(
     }
     userId = created.user.id;
     createdPassword = password;
-    if (body.fullName) {
-      await supabase.from("profiles").update({ full_name: body.fullName }).eq("id", userId);
+    if (fullName) {
+      await supabase.from("profiles").update({ full_name: fullName }).eq("id", userId);
     }
   }
 
@@ -105,6 +104,16 @@ export async function POST(
     console.error("[admin/admins POST] assign", assignErr);
     return NextResponse.json({ error: "Could not assign the admin." }, { status: 500 });
   }
+
+  await logAdminAction({
+    actorId: admin.id,
+    action: "event_admin.assign",
+    eventId: params.id,
+    targetType: "user",
+    targetId: userId ?? null,
+    metadata: { email },
+    ip: clientIp(req),
+  });
 
   // createdPassword is returned once so the super admin can share it.
   return NextResponse.json(

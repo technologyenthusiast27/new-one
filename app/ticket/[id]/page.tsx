@@ -10,6 +10,7 @@ import { generateQrDataUrl } from "@/lib/qr";
 import { inr, formatEventDate, formatTime } from "@/lib/format";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { TicketReveal } from "@/components/TicketReveal";
+import { GuestNameEditor } from "@/components/GuestNameEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function BookingPage({
   const cards = attendees.length
     ? await Promise.all(
         attendees.map(async (a) => ({
-          name: a.name ?? "Guest",
+          name: a.name ?? `Guest #${a.seatIndex}`,
           code: a.ticketCode,
           checkedIn: a.status === "checked_in",
           qr: await generateQrDataUrl(`${siteUrl()}/ticket/a/${a.ticketCode}`),
@@ -186,6 +187,13 @@ export default async function BookingPage({
             )}
           </div>
         </TicketReveal>
+
+        {attendees.length > 1 && (
+          <GuestNameEditor
+            bookingId={ticket.id}
+            initial={attendees.map((a) => ({ seatIndex: a.seatIndex, name: a.name }))}
+          />
+        )}
 
         <p className="mt-6 text-center text-xs text-neutral-500">
           Keep these safe. Each QR admits one guest and can only be used once.

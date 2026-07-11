@@ -7,6 +7,9 @@ import {
   type EventInput,
 } from "@/lib/events";
 import { missingComplianceForPublish } from "@/lib/compliance";
+import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { isUuid, clientIp } from "@/lib/security";
+import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,8 @@ export async function GET(
 ) {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
@@ -29,8 +34,13 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
@@ -65,6 +75,17 @@ export async function PATCH(
 
     const event = await updateEvent(supabase, params.id, body);
     if (!event) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
+    await logAdminAction({
+      actorId: admin.id,
+      action: "event.update",
+      eventId: event.id,
+      targetType: "event",
+      targetId: event.id,
+      metadata: { status: event.status },
+      ip: clientIp(req),
+    });
+
     return NextResponse.json({ event });
   } catch (err) {
     console.error("[admin/events PATCH] failed:", err);
@@ -73,17 +94,30 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isUuid(params.id))
+    return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (admin.role !== "super_admin")
     return NextResponse.json({ error: "Only a super admin can delete events." }, { status: 403 });
 
   try {
     const supabase = createClient();
     await deleteEvent(supabase, params.id);
+    await logAdminAction({
+      actorId: admin.id,
+      action: "event.delete",
+      eventId: null,
+      targetType: "event",
+      targetId: params.id,
+      ip: clientIp(req),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/events DELETE] failed:", err);

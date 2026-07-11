@@ -4,21 +4,37 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, CalendarRange, LogOut, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { AdminRole } from "@/lib/types";
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; exact: boolean };
+
+const SUPER_NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/events", label: "Events", icon: CalendarRange, exact: false },
 ];
 
 export function AdminShell({
   email,
+  role,
+  eventHref,
   children,
 }: {
   email: string | null;
+  role: AdminRole;
+  eventHref?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // Event admins only ever see a link to their own event; super admins get the
+  // full nav. This mirrors the server-side gating — it is not the enforcement.
+  const NAV: NavItem[] =
+    role === "super_admin"
+      ? SUPER_NAV
+      : eventHref && eventHref.startsWith("/admin/events/")
+        ? [{ href: eventHref, label: "My event", icon: CalendarRange, exact: false }]
+        : [];
 
   async function signOut() {
     const supabase = createClient();

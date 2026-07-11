@@ -1,37 +1,60 @@
 import { NextResponse } from "next/server";
-import { createClient, getAdminProfile } from "@/lib/supabase/server";
-import { updateTicketStatus } from "@/lib/tickets";
-import type { TicketStatus } from "@/lib/types";
+import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
+import { getTicket, updateTicketStatus } from "@/lib/tickets";
+import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { ticketStatusSchema } from "@/lib/schemas";
+import { isBookingId, clientIp } from "@/lib/security";
+import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: TicketStatus[] = ["confirmed", "checked_in", "cancelled"];
-
+/**
+ * Booking-lifecycle transitions (confirm ↔ cancel) for a whole booking. Guest
+ * check-in is NOT done here — that is per-attendee via
+ * /api/admin/attendees/[code]. Access is verified against the ticket's event so
+ * an admin can never mutate a booking for an event they are not assigned to.
+ */
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
+
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  let body: { status?: string };
-  try {
-    body = (await req.json()) as { status?: string };
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  if (!isBookingId(params.id)) {
+    return NextResponse.json({ error: "Invalid booking id." }, { status: 400 });
   }
 
-  const status = body.status as TicketStatus;
-  if (!status || !ALLOWED.includes(status)) {
-    return NextResponse.json({ error: "Invalid status." }, { status: 400 });
-  }
+  const parsed = await readJson(req, ticketStatusSchema);
+  if (!parsed.ok) return parsed.response;
+  const { status } = parsed.data;
 
   try {
     const supabase = createClient();
-    // checked_in_by is the acting admin's profile id (audit trail).
-    const ticket = await updateTicketStatus(supabase, params.id, status, admin.id);
+
+    // RLS already scopes reads, but we also check ownership explicitly.
+    const ticket = await getTicket(supabase, params.id);
     if (!ticket) return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
-    return NextResponse.json({ ticket });
+    if (!canAccessEvent(admin, ticket.eventId)) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
+    const updated = await updateTicketStatus(supabase, params.id, status, admin.id);
+    if (!updated) return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
+
+    await logAdminAction({
+      actorId: admin.id,
+      action: status === "cancelled" ? "booking.cancel" : "booking.restore",
+      eventId: ticket.eventId,
+      targetType: "booking",
+      targetId: ticket.id,
+      ip: clientIp(req),
+    });
+
+    return NextResponse.json({ ticket: updated });
   } catch (err) {
     console.error("[admin/tickets PATCH] failed:", err);
     return NextResponse.json({ error: "Could not update the ticket." }, { status: 500 });

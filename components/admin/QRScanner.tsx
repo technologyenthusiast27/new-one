@@ -99,7 +99,9 @@ export function QRScanner({ onChanged }: { onChanged?: () => void }) {
       // the door staff can tell a fresh admit from a re-scan.
       setResult({
         kind: "success",
-        name: data.attendee?.name ?? "Guest",
+        name:
+          data.attendee?.name ??
+          (data.attendee ? `Guest #${data.attendee.seatIndex}` : "Guest"),
         already: Boolean(data.alreadyCheckedIn),
       });
       onChanged?.();
