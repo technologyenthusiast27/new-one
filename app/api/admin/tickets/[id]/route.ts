@@ -14,10 +14,8 @@ export const dynamic = "force-dynamic";
  * /api/admin/attendees/[code]. Access is verified against the ticket's event so
  * an admin can never mutate a booking for an event they are not assigned to.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -33,7 +31,7 @@ export async function PATCH(
   const { status } = parsed.data;
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // RLS already scopes reads, but we also check ownership explicitly.
     const ticket = await getTicket(supabase, params.id);

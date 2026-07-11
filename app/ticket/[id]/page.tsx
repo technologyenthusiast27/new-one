@@ -23,11 +23,12 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 }
 
-export default async function BookingPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function BookingPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const supabase = createAdminClient();
   const ticket = await getTicket(supabase, params.id);
   if (!ticket) notFound();

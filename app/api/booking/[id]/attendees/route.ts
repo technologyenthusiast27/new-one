@@ -14,10 +14,8 @@ export const dynamic = "force-dynamic";
  * ticket page or its QR codes). Only names change here — never check-in status
  * or codes — and every update is scoped to this booking id.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 

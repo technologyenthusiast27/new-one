@@ -6,8 +6,8 @@ import { cookies } from "next/headers";
  * Used by Server Components, middleware, and admin API routes to read the
  * caller's session so RLS scopes what they can see. RLS applies.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -39,7 +39,7 @@ import type { AdminContext } from "@/lib/types";
  * admin. This is the single server-side authorization source for /admin.
  */
 export async function getAdminContext(): Promise<AdminContext | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

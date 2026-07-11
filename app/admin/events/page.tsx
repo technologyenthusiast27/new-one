@@ -10,7 +10,7 @@ export default async function AdminEventsPage() {
   const admin = await getAdminContext();
   if (!admin) redirect("/admin/login");
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // The events list (and event creation) is super-admin only. Event admins are
   // locked to their own event page.

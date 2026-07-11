@@ -11,10 +11,8 @@ import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string; typeId: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string; typeId: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -33,7 +31,7 @@ export async function PATCH(
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     // Scoped to the event id → cannot touch another event's type.
     const ticketType = await updateTicketType(supabase, params.id, params.typeId, body);
     if (!ticketType) return NextResponse.json({ error: "Not found." }, { status: 404 });
@@ -52,10 +50,8 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string; typeId: string } },
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string; typeId: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -67,7 +63,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     await deleteTicketType(supabase, params.id, params.typeId);
     await logAdminAction({
       actorId: admin.id,

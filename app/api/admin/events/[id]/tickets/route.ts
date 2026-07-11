@@ -7,10 +7,8 @@ import { isUuid } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isUuid(params.id))
@@ -18,7 +16,7 @@ export async function GET(
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const [tickets, stats, orders, attendees, checkins] = await Promise.all([
     listTicketsForEvent(supabase, params.id),
     getEventStats(supabase, params.id),

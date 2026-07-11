@@ -8,10 +8,8 @@ import { logAdminAction } from "@/lib/audit";
 export const dynamic = "force-dynamic";
 
 /** Remove an event admin's assignment from this event (super admin only). */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string; userId: string } },
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string; userId: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 

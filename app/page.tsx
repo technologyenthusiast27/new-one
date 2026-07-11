@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 async function loadEvents(): Promise<Event[]> {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     return await getVisibleEvents(supabase);
   } catch (err) {
     console.error("[home] could not load events:", err);

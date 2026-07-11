@@ -13,10 +13,8 @@ import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isUuid(params.id))
@@ -24,16 +22,14 @@ export async function GET(
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const event = await getEventById(supabase, params.id);
   if (!event) return NextResponse.json({ error: "Not found." }, { status: 404 });
   return NextResponse.json({ event });
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -52,7 +48,7 @@ export async function PATCH(
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // If this update results in a published event, enforce that mandatory
     // compliance info is complete — using the merged (existing + patch) state.
@@ -93,10 +89,8 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -108,7 +102,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Only a super admin can delete events." }, { status: 403 });
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     await deleteEvent(supabase, params.id);
     await logAdminAction({
       actorId: admin.id,

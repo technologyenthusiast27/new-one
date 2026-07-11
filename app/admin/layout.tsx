@@ -19,7 +19,7 @@ export default async function AdminLayout({
   // only that, never the dashboard or the cross-event events list.
   let eventHref: string | undefined;
   if (admin.role !== "super_admin") {
-    const supabase = createClient();
+    const supabase = await createClient();
     eventHref = await eventAdminLandingPath(supabase, admin);
   }
 

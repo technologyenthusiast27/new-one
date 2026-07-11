@@ -14,10 +14,8 @@ export const dynamic = "force-dynamic";
  * three ways: database RLS (`can_access_event`), an explicit ownership check,
  * and the attendee code format check below.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { code: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -32,7 +30,7 @@ export async function PATCH(
   if (!parsed.ok) return parsed.response;
   const { status } = parsed.data;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // RLS returns the attendee only if the caller can access its event.
   const existing = await getAttendeeByCode(supabase, params.code);

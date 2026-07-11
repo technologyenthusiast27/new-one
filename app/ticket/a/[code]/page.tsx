@@ -21,11 +21,12 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 }
 
-export default async function AttendeeTicketPage({
-  params,
-}: {
-  params: { code: string };
-}) {
+export default async function AttendeeTicketPage(
+  props: {
+    params: Promise<{ code: string }>;
+  }
+) {
+  const params = await props.params;
   const supabase = createAdminClient();
   const attendee = await getAttendeeByCode(supabase, params.code);
   if (!attendee) notFound();

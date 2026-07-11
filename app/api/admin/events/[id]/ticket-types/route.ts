@@ -11,10 +11,8 @@ import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!isUuid(params.id))
@@ -22,15 +20,13 @@ export async function GET(
   if (!canAccessEvent(admin, params.id))
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const ticketTypes = await listTicketTypes(supabase, params.id);
   return NextResponse.json({ ticketTypes });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
@@ -56,7 +52,7 @@ export async function POST(
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const ticketType = await createTicketType(supabase, params.id, body);
     await logAdminAction({
       actorId: admin.id,

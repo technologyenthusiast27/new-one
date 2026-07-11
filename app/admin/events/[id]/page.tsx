@@ -9,15 +9,16 @@ import { EventDetail } from "@/components/admin/EventDetail";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEventPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AdminEventPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const admin = await getAdminContext();
   if (!admin) redirect("/admin/login");
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const event = await getEventByIdOrSlug(supabase, params.id);
   if (!event) notFound();
 

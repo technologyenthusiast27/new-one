@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
   const admin = await getAdminContext();
   if (!admin) redirect("/admin/login");
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // The cross-event dashboard is super-admin only. Event admins are sent to
   // their own event (server-side guard mirroring the middleware).

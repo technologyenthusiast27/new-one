@@ -9,10 +9,8 @@ import { logAdminAction } from "@/lib/audit";
 export const dynamic = "force-dynamic";
 
 /** List the event admins assigned to this event (super admin only). */
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (admin.role !== "super_admin")
@@ -44,10 +42,8 @@ export async function GET(
  * Assign an event admin to this event (super admin only). Creates the user via
  * Supabase Auth if they don't exist yet; otherwise assigns the existing user.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 

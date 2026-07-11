@@ -12,7 +12,7 @@ export async function GET() {
   const admin = await getAdminProfile();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   // Scope the list to the caller: event admins never receive events they are
   // not assigned to (defence in depth beyond RLS, which allows reading any
   // published event).
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const event = await createEvent(supabase, body);
     await logAdminAction({
       actorId: admin.id,
