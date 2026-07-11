@@ -17,7 +17,7 @@ import { sendTicketEmail } from "@/lib/email";
 import { createAttendeesForBooking } from "@/lib/attendees";
 import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
 import { verifySchema } from "@/lib/schemas";
-import { rateLimit, clientIp } from "@/lib/security";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,13 +29,8 @@ export async function POST(req: Request) {
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  const rl = rateLimit(`verify:${clientIp(req)}`, 20, 60_000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please wait a moment and try again." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  const limited = await enforceRateLimit(req, { name: "verify", limit: 20, windowSec: 60 });
+  if (limited) return limited;
 
   const parsed = await readJson(req, verifySchema);
   if (!parsed.ok) return parsed.response;

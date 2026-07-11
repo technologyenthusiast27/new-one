@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, UserPlus, Copy } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Copy, ShieldCheck, Shield } from "lucide-react";
 
 interface EventAdminRow {
   id: string;
   email: string | null;
   fullName?: string | null;
+  mfaEnforced?: boolean;
 }
 
 /**
@@ -66,6 +67,18 @@ export function EventAdmins({ eventId }: { eventId: string }) {
   async function remove(userId: string) {
     await fetch(`/api/admin/events/${eventId}/admins/${userId}`, { method: "DELETE" });
     setAdmins((a) => a.filter((x) => x.id !== userId));
+  }
+
+  /** Toggle whether MFA is required for this event admin (server-enforced). */
+  async function toggleMfa(userId: string, mfaEnforced: boolean) {
+    const res = await fetch(`/api/admin/events/${eventId}/admins/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mfaEnforced }),
+    });
+    if (res.ok) {
+      setAdmins((a) => a.map((x) => (x.id === userId ? { ...x, mfaEnforced } : x)));
+    }
   }
 
   return (
@@ -136,15 +149,30 @@ export function EventAdmins({ eventId }: { eventId: string }) {
                 <p className="text-sm text-white">{a.email}</p>
                 {a.fullName && <p className="text-xs text-neutral-500">{a.fullName}</p>}
               </div>
-              <button
-                type="button"
-                onClick={() => remove(a.id)}
-                title="Remove"
-                aria-label="Remove admin"
-                className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 text-neutral-300 transition-colors hover:bg-red-500/15 hover:text-red-300"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleMfa(a.id, !a.mfaEnforced)}
+                  title={a.mfaEnforced ? "MFA required — click to make optional" : "MFA optional — click to require"}
+                  aria-label={a.mfaEnforced ? "Make MFA optional" : "Require MFA"}
+                  className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${
+                    a.mfaEnforced
+                      ? "border-violet-glow/40 bg-violet-glow/15 text-violet-soft"
+                      : "border-white/10 text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  {a.mfaEnforced ? <ShieldCheck className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(a.id)}
+                  title="Remove"
+                  aria-label="Remove admin"
+                  className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 text-neutral-300 transition-colors hover:bg-red-500/15 hover:text-red-300"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))
         )}

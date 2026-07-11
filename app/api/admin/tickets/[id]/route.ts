@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import { getTicket, updateTicketStatus } from "@/lib/tickets";
-import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { readJson, rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { ticketStatusSchema } from "@/lib/schemas";
 import { isBookingId, clientIp } from "@/lib/security";
 import { logAdminAction } from "@/lib/audit";
@@ -20,7 +21,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
+  const limited = await enforceRateLimit(req, { name: "booking-status", limit: 60, windowSec: 60, key: admin.id });
+  if (limited) return limited;
+
 
   if (!isBookingId(params.id)) {
     return NextResponse.json({ error: "Invalid booking id." }, { status: 400 });
@@ -37,7 +41,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     const ticket = await getTicket(supabase, params.id);
     if (!ticket) return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
     if (!canAccessEvent(admin, ticket.eventId)) {
-      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+      return denied(req, 403, { actorId: admin.id });
     }
 
     const updated = await updateTicketStatus(supabase, params.id, status, admin.id);

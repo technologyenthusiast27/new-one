@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import {
   getEventById,
@@ -7,20 +8,20 @@ import {
   type EventInput,
 } from "@/lib/events";
 import { missingComplianceForPublish } from "@/lib/compliance";
-import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { isUuid, clientIp } from "@/lib/security";
 import { logAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (!isUuid(params.id))
     return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
 
   const supabase = await createClient();
   const event = await getEventById(supabase, params.id);
@@ -34,11 +35,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (!isUuid(params.id))
     return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
 
   let body: Partial<EventInput>;
   try {
@@ -95,11 +96,14 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (!isUuid(params.id))
     return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
   if (admin.role !== "super_admin")
-    return NextResponse.json({ error: "Only a super admin can delete events." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id, message: "Only a super admin can delete events." });
+
+  const limited = await enforceRateLimit(req, { name: "event-delete", limit: 20, windowSec: 3600, key: admin.id });
+  if (limited) return limited;
 
   try {
     const supabase = await createClient();

@@ -5,7 +5,7 @@ import {
   deleteTicketType,
   type TicketTypeInput,
 } from "@/lib/ticketTypes";
-import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { isUuid, clientIp } from "@/lib/security";
 import { logAdminAction } from "@/lib/audit";
 
@@ -17,11 +17,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string;
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (!isUuid(params.id) || !isUuid(params.typeId))
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
 
   let body: Partial<TicketTypeInput>;
   try {
@@ -56,11 +56,11 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (!isUuid(params.id) || !isUuid(params.typeId))
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   if (!canAccessEvent(admin, params.id))
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
 
   try {
     const supabase = await createClient();

@@ -1,8 +1,9 @@
 import crypto from "crypto";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { NextResponse } from "next/server";
 import { getAdminProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { readJson, rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { assignAdminSchema } from "@/lib/schemas";
 import { isUuid, clientIp } from "@/lib/security";
 import { logAdminAction } from "@/lib/audit";
@@ -10,19 +11,19 @@ import { logAdminAction } from "@/lib/audit";
 export const dynamic = "force-dynamic";
 
 /** List the event admins assigned to this event (super admin only). */
-export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (admin.role !== "super_admin")
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
   if (!isUuid(params.id))
     return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
 
   const supabase = createAdminClient();
   const { data: rows, error } = await supabase
     .from("event_admins")
-    .select("user_id, created_at, profiles!inner(id, email, full_name, role)")
+    .select("user_id, created_at, profiles!inner(*)")
     .eq("event_id", params.id);
   if (error) {
     console.error("[admin/admins GET]", error);
@@ -33,8 +34,15 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
       id: string;
       email: string | null;
       full_name: string | null;
+      mfa_enforced?: boolean | null;
     };
-    return { id: p.id, email: p.email, fullName: p.full_name, assignedAt: r.created_at };
+    return {
+      id: p.id,
+      email: p.email,
+      fullName: p.full_name,
+      mfaEnforced: p.mfa_enforced === true,
+      assignedAt: r.created_at,
+    };
   });
   return NextResponse.json({ admins });
 }
@@ -49,11 +57,14 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (admin.role !== "super_admin")
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
   if (!isUuid(params.id))
     return NextResponse.json({ error: "Invalid event id." }, { status: 400 });
+
+  const limited = await enforceRateLimit(req, { name: "admin-assign", limit: 30, windowSec: 3600, key: admin.id });
+  if (limited) return limited;
 
   const parsed = await readJson(req, assignAdminSchema);
   if (!parsed.ok) return parsed.response;

@@ -4,7 +4,10 @@ import { getTicket } from "@/lib/tickets";
 import { renameAttendees, getAttendeesForBooking } from "@/lib/attendees";
 import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
 import { renameAttendeesSchema } from "@/lib/schemas";
-import { isBookingId, rateLimit, clientIp, cleanName } from "@/lib/security";
+import { isBookingId, clientIp, cleanName } from "@/lib/security";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { verifyTurnstile } from "@/lib/turnstile";
+import { logAdminAction, requestContext } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,16 +26,26 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     return NextResponse.json({ error: "Invalid booking id." }, { status: 400 });
   }
 
-  const rl = rateLimit(`guests:${clientIp(req)}:${params.id}`, 20, 60_000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many updates. Please wait a moment." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  const limited = await enforceRateLimit(req, {
+    name: "guests",
+    limit: 20,
+    windowSec: 60,
+    key: `${clientIp(req)}:${params.id}`,
+  });
+  if (limited) return limited;
 
   const parsed = await readJson(req, renameAttendeesSchema);
   if (!parsed.ok) return parsed.response;
+
+  // Bot protection (no-op when Turnstile isn't configured).
+  const turnstile = await verifyTurnstile(parsed.data.turnstileToken, clientIp(req));
+  if (!turnstile.ok) {
+    void logAdminAction({ actorId: null, action: "security.turnstile_failed", ...requestContext(req) });
+    return NextResponse.json(
+      { error: "Verification failed. Please refresh the page and try again." },
+      { status: 403 },
+    );
+  }
 
   const supabase = createAdminClient();
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { z } from "zod";
 import { isSameOrigin } from "./security";
+import { logAdminAction, requestContext } from "./audit";
 
 /**
  * Parse and validate a JSON request body against a Zod schema. Returns either
@@ -39,4 +40,35 @@ export function rejectCrossOrigin(req: Request): NextResponse | null {
     return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
   }
   return null;
+}
+
+/**
+ * Authorization denial that is also recorded to the audit trail (fire and
+ * forget — logging never delays or breaks the response). Use for admin-route
+ * 401/403s so unauthorized probing is visible in monitoring.
+ */
+export function denied(
+  req: Request,
+  status: 401 | 403,
+  opts?: {
+    actorId?: string | null;
+    eventId?: string | null;
+    reason?: string;
+    message?: string;
+  },
+): NextResponse {
+  const ctx = requestContext(req);
+  void logAdminAction({
+    actorId: opts?.actorId ?? null,
+    action: status === 401 ? "auth.denied_401" : "auth.denied_403",
+    eventId: opts?.eventId ?? null,
+    metadata: opts?.reason ? { reason: opts.reason } : {},
+    ip: ctx.ip,
+    userAgent: ctx.userAgent,
+    route: ctx.route,
+  });
+  return NextResponse.json(
+    { error: opts?.message ?? (status === 401 ? "Unauthorized." : "Forbidden.") },
+    { status },
+  );
 }

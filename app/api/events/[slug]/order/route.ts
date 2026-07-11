@@ -6,7 +6,10 @@ import { getTicketTypeByCode } from "@/lib/ticketTypes";
 import { createOrderRecord } from "@/lib/orders";
 import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
 import { createOrderSchema } from "@/lib/schemas";
-import { rateLimit, clientIp, cleanName } from "@/lib/security";
+import { clientIp, cleanName } from "@/lib/security";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { verifyTurnstile } from "@/lib/turnstile";
+import { logAdminAction, requestContext } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,18 +19,24 @@ export async function POST(req: Request, props: { params: Promise<{ slug: string
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  // Rate limit order creation per IP to blunt abuse / card-testing loops.
-  const rl = rateLimit(`order:${clientIp(req)}`, 12, 60_000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please wait a moment and try again." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  // Rate limit order creation per IP to blunt abuse / card-testing loops
+  // (distributed via Upstash when configured, in-memory fallback otherwise).
+  const limited = await enforceRateLimit(req, { name: "order", limit: 12, windowSec: 60 });
+  if (limited) return limited;
 
   const parsed = await readJson(req, createOrderSchema);
   if (!parsed.ok) return parsed.response;
-  const { ticketTypeCode, quantity, name, email, phone, guestNames } = parsed.data;
+  const { ticketTypeCode, quantity, name, email, phone, guestNames, turnstileToken } = parsed.data;
+
+  // Bot protection on the booking flow (no-op when Turnstile isn't configured).
+  const turnstile = await verifyTurnstile(turnstileToken, clientIp(req));
+  if (!turnstile.ok) {
+    void logAdminAction({ actorId: null, action: "security.turnstile_failed", ...requestContext(req) });
+    return NextResponse.json(
+      { error: "Verification failed. Please refresh the page and try again." },
+      { status: 403 },
+    );
+  }
 
   const supabase = createAdminClient();
 

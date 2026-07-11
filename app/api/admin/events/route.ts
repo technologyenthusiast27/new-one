@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { createClient, getAdminProfile } from "@/lib/supabase/server";
 import { listEventsForAdmin, createEvent, type EventInput } from "@/lib/events";
 import { missingComplianceForPublish } from "@/lib/compliance";
-import { rejectCrossOrigin } from "@/lib/apiGuards";
+import { rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { logAdminAction } from "@/lib/audit";
 import { clientIp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
 
   const supabase = await createClient();
   // Scope the list to the caller: event admins never receive events they are
@@ -25,9 +26,12 @@ export async function POST(req: Request) {
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
   if (admin.role !== "super_admin")
-    return NextResponse.json({ error: "Only a super admin can create events." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id, message: "Only a super admin can create events." });
+
+  const limited = await enforceRateLimit(req, { name: "event-create", limit: 20, windowSec: 3600, key: admin.id });
+  if (limited) return limited;
 
   let body: EventInput;
   try {

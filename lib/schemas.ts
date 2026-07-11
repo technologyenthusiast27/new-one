@@ -25,6 +25,7 @@ export const createOrderSchema = z.object({
   // to the resolved seat count server-side; the cap here is only a DoS bound and
   // is set high enough not to reject a legitimate large group booking.
   guestNames: z.array(optionalGuestName).max(500).optional(),
+  turnstileToken: z.string().max(4000).optional(),
 });
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
@@ -56,6 +57,7 @@ export const renameAttendeesSchema = z.object({
     )
     .min(1)
     .max(500),
+  turnstileToken: z.string().max(4000).optional(),
 });
 
 /** POST /api/admin/events/[id]/admins */
@@ -63,4 +65,48 @@ export const assignAdminSchema = z.object({
   email: z.string().trim().email().max(200),
   fullName: nameString.optional(),
   password: z.string().min(8).max(200).optional(),
+});
+
+/** PATCH /api/admin/events/[id]/admins/[userId] — per-admin MFA policy. */
+export const adminPolicySchema = z.object({
+  mfaEnforced: z.boolean(),
+});
+
+const turnstileToken = z.string().max(4000).optional();
+
+/** POST /api/auth/login */
+export const loginSchema = z.object({
+  email: z.string().trim().email().max(200),
+  password: z.string().min(1).max(200),
+  turnstileToken,
+});
+
+/** POST /api/auth/mfa/verify — TOTP code or a recovery code. */
+export const mfaVerifySchema = z
+  .object({
+    code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code.").optional(),
+    recoveryCode: z
+      .string()
+      .trim()
+      .regex(/^[A-F0-9-]{10,40}$/i, "Invalid recovery code.")
+      .optional(),
+  })
+  .refine((v) => Boolean(v.code) !== Boolean(v.recoveryCode), {
+    message: "Provide a 6-digit code or a recovery code.",
+  });
+
+/** POST /api/auth/mfa/enroll/verify */
+export const mfaEnrollVerifySchema = z.object({
+  factorId: z.string().uuid(),
+  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code."),
+});
+
+/** POST /api/auth/mfa/unenroll */
+export const mfaUnenrollSchema = z.object({
+  factorId: z.string().uuid(),
+});
+
+/** POST /api/auth/logout */
+export const logoutSchema = z.object({
+  scope: z.enum(["local", "global"]).optional(),
 });

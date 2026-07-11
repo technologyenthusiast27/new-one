@@ -22,6 +22,8 @@ export interface AdminContext {
   /** Event ids this admin may access. For super_admin this is empty and access
    *  is unrestricted; use `canAccess()` rather than reading this directly. */
   eventIds: string[];
+  /** Whether MFA is required for this account (always true for super_admin). */
+  mfaEnforced: boolean;
 }
 
 /** One admittee within a booking — carries its own QR and check-in state. */

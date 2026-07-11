@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { createClient, getAdminProfile, canAccessEvent } from "@/lib/supabase/server";
 import { getAttendeeByCode, setAttendeeStatus } from "@/lib/attendees";
-import { readJson, rejectCrossOrigin } from "@/lib/apiGuards";
+import { readJson, rejectCrossOrigin, denied } from "@/lib/apiGuards";
 import { attendeeStatusSchema } from "@/lib/schemas";
 import { isAttendeeCode, clientIp } from "@/lib/security";
 import { logAdminAction } from "@/lib/audit";
@@ -20,7 +21,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ code: strin
   if (csrf) return csrf;
 
   const admin = await getAdminProfile();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return denied(req, 401);
+  const limited = await enforceRateLimit(req, { name: "checkin", limit: 240, windowSec: 60, key: admin.id });
+  if (limited) return limited;
+
 
   if (!isAttendeeCode(params.code)) {
     return NextResponse.json({ error: "Invalid ticket code." }, { status: 400 });
@@ -39,7 +43,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ code: strin
   }
   // Explicit ownership check on top of RLS (defence in depth).
   if (!canAccessEvent(admin, existing.eventId)) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return denied(req, 403, { actorId: admin.id });
   }
 
   const alreadyCheckedIn =

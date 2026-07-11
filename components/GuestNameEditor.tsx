@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Check, Pencil } from "lucide-react";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 export interface EditableGuest {
   seatIndex: number;
@@ -29,6 +30,7 @@ export function GuestNameEditor({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function set(i: number, value: string) {
     setNames((prev) => {
@@ -52,6 +54,7 @@ export function GuestNameEditor({
             seatIndex: g.seatIndex,
             name: names[i] ?? "",
           })),
+          turnstileToken: turnstileToken ?? undefined,
         }),
       });
       const data = await res.json();
@@ -97,6 +100,9 @@ export function GuestNameEditor({
             className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:border-violet-glow/50 focus:outline-none focus:ring-2 focus:ring-violet-glow/25"
           />
         ))}
+      </div>
+      <div className="mt-3">
+        <TurnstileWidget onToken={setTurnstileToken} />
       </div>
       {error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}
       <div className="mt-4 flex items-center gap-2">

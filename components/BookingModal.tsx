@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Minus, Plus, ShieldCheck, Users } from "lucide-react";
 import type { Event, TicketType } from "@/lib/types";
 import { inr } from "@/lib/format";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 interface Consents {
   terms: boolean;
@@ -48,6 +49,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [guestNames, setGuestNames] = useState<string[]>([]);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [consents, setConsents] = useState<Consents>(EMPTY_CONSENTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
           quantity,
           ...form,
           guestNames: namesPayload,
+          turnstileToken: turnstileToken ?? undefined,
         }),
       });
       const order = await orderRes.json();
@@ -334,6 +337,9 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
                 .
               </Consent>
             </fieldset>
+
+            {/* Bot check — renders nothing unless Turnstile is configured. */}
+            <TurnstileWidget onToken={setTurnstileToken} />
 
             {error && (
               <p
