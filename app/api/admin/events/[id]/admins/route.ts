@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { getAdminProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -119,8 +120,9 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
 }
 
 function generatePassword(): string {
+  // CSPRNG — Math.random() is predictable and must never mint credentials.
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   let out = "";
-  for (let i = 0; i < 16; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 20; i++) out += chars[crypto.randomInt(chars.length)];
   return out;
 }

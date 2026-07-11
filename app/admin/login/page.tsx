@@ -7,10 +7,27 @@ import { Lock, Loader2, LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 
+/**
+ * Whitelist validation for the post-login redirect target. Only internal
+ * /admin paths are ever followed — external URLs, protocol-relative URLs
+ * (//evil.com), javascript: URIs and malformed values all fall back to /admin.
+ */
+function safeNextPath(raw: string | null): string {
+  const fallback = "/admin";
+  if (!raw) return fallback;
+  // Must be an absolute internal path with exactly one leading slash.
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return fallback;
+  // No scheme separators, whitespace or backslashes anywhere.
+  if (/[:\s\\]/.test(raw)) return fallback;
+  // Whitelist: only admin routes are valid post-login destinations.
+  if (!/^\/admin(\/|\?|$)/.test(raw)) return fallback;
+  return raw;
+}
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/admin";
+  const next = safeNextPath(params.get("next"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
