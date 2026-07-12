@@ -17,9 +17,6 @@ export async function POST(req: Request) {
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  const limited = await enforceRateLimit(req, { name: "mfa-enroll-verify", limit: 10, windowSec: 300 });
-  if (limited) return limited;
-
   const parsed = await readJson(req, mfaEnrollVerifySchema);
   if (!parsed.ok) return parsed.response;
   const { factorId, code } = parsed.data;
@@ -29,6 +26,10 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  // Keyed by ACCOUNT, not IP: guesses can't be spread across source IPs.
+  const limited = await enforceRateLimit(req, { name: "mfa-enroll-verify", limit: 10, windowSec: 300, key: user.id });
+  if (limited) return limited;
 
   const ctx = requestContext(req);
 

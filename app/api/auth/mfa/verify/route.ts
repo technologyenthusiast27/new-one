@@ -33,7 +33,8 @@ export async function POST(req: Request) {
 
   // ── Recovery-code path ──
   if (parsed.data.recoveryCode) {
-    const limited = await enforceRateLimit(req, { name: "mfa-recover", limit: 3, windowSec: 3600 });
+    // Keyed by ACCOUNT, not IP: guesses can't be spread across source IPs.
+    const limited = await enforceRateLimit(req, { name: "mfa-recover", limit: 3, windowSec: 3600, key: user.id });
     if (limited) return limited;
 
     const ok = await consumeRecoveryCode(user.id, parsed.data.recoveryCode);
@@ -59,7 +60,8 @@ export async function POST(req: Request) {
   }
 
   // ── TOTP path ──
-  const limited = await enforceRateLimit(req, { name: "mfa-verify", limit: 8, windowSec: 60 });
+  // Keyed by ACCOUNT, not IP: guesses can't be spread across source IPs.
+  const limited = await enforceRateLimit(req, { name: "mfa-verify", limit: 8, windowSec: 60, key: user.id });
   if (limited) return limited;
 
   const { data: factors } = await supabase.auth.mfa.listFactors();

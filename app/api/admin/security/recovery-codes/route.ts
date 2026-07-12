@@ -16,14 +16,14 @@ export async function POST(req: Request) {
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  const limited = await enforceRateLimit(req, { name: "recovery-regen", limit: 5, windowSec: 3600 });
-  if (limited) return limited;
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { name: "recovery-regen", limit: 5, windowSec: 3600, key: user.id });
+  if (limited) return limited;
 
   try {
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();

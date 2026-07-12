@@ -48,10 +48,13 @@ const COLS =
   "id, order_id, event_id, ticket_type_id, ticket_type_name, ticket_type_code, quantity, seats, amount_inr, buyer_name, buyer_email, buyer_phone, status, created_at, checked_in_at, checked_in_by, is_demo";
 
 function shortId(): string {
-  return crypto.randomBytes(3).toString("hex").toUpperCase();
+  // 64 bits. The booking id is a bearer credential (ticket page shows buyer
+  // PII; attendee QR codes derive from it), so it must be unguessable — 24
+  // bits was enumerable. Old shorter ids remain valid.
+  return crypto.randomBytes(8).toString("hex").toUpperCase();
 }
 
-/** Globally-unique, human-readable ticket id, e.g. NL-HOB-VIP-3F7A2C. */
+/** Globally-unique, unguessable ticket id, e.g. NL-HOB-VIP-3F7A2C90D14B82E6. */
 export function makeTicketId(eventCode: string, ticketTypeCode: string): string {
   return `NL-${eventCode.toUpperCase()}-${ticketTypeCode.toUpperCase()}-${shortId()}`;
 }
