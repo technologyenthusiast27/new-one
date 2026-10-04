@@ -2,12 +2,12 @@
 // legal pages and event pages. Placeholders — swap for real details.
 
 export const COMPANY = {
-  name: "NovaLabs",
-  legalName: "NovaLabs Entertainment",
+  name: "FizTickets",
+  legalName: "FizTickets Entertainment",
   tagline: "Premium event experiences.",
-  supportEmail: "support@novalabs.club",
-  businessEmail: "partnerships@novalabs.club",
-  privacyEmail: "privacy@novalabs.club",
+  supportEmail: "support@fiztickets.club",
+  businessEmail: "partnerships@fiztickets.club",
+  privacyEmail: "privacy@fiztickets.club",
   whatsapp: "+91 90000 00000",
   whatsappUrl: "https://wa.me/919000000000",
   responseTime: "We typically respond within 24–48 hours (Mon–Sat).",

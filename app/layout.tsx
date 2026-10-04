@@ -20,14 +20,14 @@ const sans = Jost({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "NovaLabs — Immersive Events & Ticketing",
-    template: "%s · NovaLabs",
+    default: "FizTickets — Immersive Events & Ticketing",
+    template: "%s · FizTickets",
   },
   description:
-    "NovaLabs curates cinematic, unforgettable events. Discover the lineup and book your pass — instant QR tickets, secure payments.",
-  keywords: ["NovaLabs", "events", "tickets", "nightlife", "music", "experiences"],
+    "FizTickets curates cinematic, unforgettable events. Discover the lineup and book your pass — instant QR tickets, secure payments.",
+  keywords: ["FizTickets", "events", "tickets", "nightlife", "music", "experiences"],
   openGraph: {
-    title: "NovaLabs — Immersive Events & Ticketing",
+    title: "FizTickets — Immersive Events & Ticketing",
     description: "Discover cinematic events and book your pass in seconds.",
     type: "website",
   },

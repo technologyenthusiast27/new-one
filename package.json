@@ -1,8 +1,8 @@
 {
-  "name": "novalabs-club",
+  "name": "fiztickets-club",
   "version": "1.0.0",
   "private": true,
-  "description": "NovaLabs.club — a multi-event ticketing platform (Next.js, Supabase, Razorpay).",
+  "description": "FizTickets.club — a multi-event ticketing platform (Next.js, Supabase, Razorpay).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

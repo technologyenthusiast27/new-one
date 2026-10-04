@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — Migration 0004: role-based multi-event admin
+-- FizTickets.club — Migration 0004: role-based multi-event admin
 -- ============================================================================
 -- Adds super_admin / event_admin roles and per-event assignment via
 -- event_admins. Rewrites RLS so event admins only see/manage assigned events.

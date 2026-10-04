@@ -5,11 +5,11 @@ import { COMPANY, LEGAL_LAST_UPDATED } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How NovaLabs collects, uses, protects and shares your personal information when you browse events and book tickets.",
+    "How FizTickets collects, uses, protects and shares your personal information when you browse events and book tickets.",
   openGraph: {
-    title: "Privacy Policy · NovaLabs",
+    title: "Privacy Policy · FizTickets",
     description:
-      "How NovaLabs collects, uses, protects and shares your personal information.",
+      "How FizTickets collects, uses, protects and shares your personal information.",
     type: "article",
   },
 };

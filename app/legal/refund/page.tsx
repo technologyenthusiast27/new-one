@@ -5,11 +5,11 @@ import { COMPANY, LEGAL_LAST_UPDATED } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy",
   description:
-    "How refunds, cancellations, transfers and rescheduled or cancelled events are handled at NovaLabs.",
+    "How refunds, cancellations, transfers and rescheduled or cancelled events are handled at FizTickets.",
   openGraph: {
-    title: "Refund & Cancellation Policy · NovaLabs",
+    title: "Refund & Cancellation Policy · FizTickets",
     description:
-      "How refunds, cancellations, transfers and cancelled events are handled at NovaLabs.",
+      "How refunds, cancellations, transfers and cancelled events are handled at FizTickets.",
     type: "article",
   },
 };

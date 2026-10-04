@@ -9,9 +9,9 @@ import { ContactForm } from "@/components/ContactForm";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with NovaLabs — support, partnerships and business enquiries. We typically respond within 24–48 hours.",
+    "Get in touch with FizTickets — support, partnerships and business enquiries. We typically respond within 24–48 hours.",
   openGraph: {
-    title: "Contact NovaLabs",
+    title: "Contact FizTickets",
     description:
       "Support, partnerships and business enquiries. We typically respond within 24–48 hours.",
     type: "website",

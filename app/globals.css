@@ -13,11 +13,8 @@
 
   body {
     @apply bg-charcoal-950 text-neutral-200 font-sans antialiased;
-    background-image:
-      radial-gradient(1000px 600px at 15% -10%, rgba(255, 255, 255, 0.05), transparent 60%),
-      radial-gradient(900px 700px at 100% 10%, rgba(255, 255, 255, 0.035), transparent 55%),
-      radial-gradient(700px 700px at 50% 120%, rgba(255, 255, 255, 0.025), transparent 60%);
-    background-attachment: fixed;
+    /* Pure OLED black — no ambient gradient wash. */
+    background-color: #000000;
   }
 
   ::selection {

@@ -5,11 +5,11 @@ import { COMPANY, LEGAL_LAST_UPDATED } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Community Guidelines",
   description:
-    "The standards of conduct we expect from everyone who attends or takes part in NovaLabs events.",
+    "The standards of conduct we expect from everyone who attends or takes part in FizTickets events.",
   openGraph: {
-    title: "Community Guidelines · NovaLabs",
+    title: "Community Guidelines · FizTickets",
     description:
-      "The standards of conduct we expect from everyone who attends NovaLabs events.",
+      "The standards of conduct we expect from everyone who attends FizTickets events.",
     type: "article",
   },
 };

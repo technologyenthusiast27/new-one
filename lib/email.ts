@@ -11,7 +11,7 @@ const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT || 587);
 const user = process.env.SMTP_USER;
 const pass = process.env.SMTP_PASS;
-const from = process.env.SMTP_FROM || "NovaLabs <tickets@novalabs.club>";
+const from = process.env.SMTP_FROM || "FizTickets <tickets@fiztickets.club>";
 
 export const emailConfigured = Boolean(host && user && pass);
 

@@ -70,7 +70,7 @@ export function AdminShell({
             <Sparkles className="h-4 w-4 text-charcoal-950" />
           </span>
           <span className="flex flex-col leading-none">
-            <span className="font-display text-sm font-semibold text-white">NovaLabs</span>
+            <span className="font-display text-sm font-semibold text-white">FizTickets</span>
             <span className="text-[10px] uppercase tracking-[0.2em] text-violet-soft/80">
               Admin
             </span>

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: "totp",
-    friendlyName: `NovaLabs Admin (${new Date().toISOString().slice(0, 10)})`,
+    friendlyName: `FizTickets Admin (${new Date().toISOString().slice(0, 10)})`,
   });
   if (error || !data) {
     console.error("[mfa/enroll] failed:", error);

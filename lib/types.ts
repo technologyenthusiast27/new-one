@@ -1,5 +1,5 @@
 // ============================================================================
-// NovaLabs.club — shared domain types
+// FizTickets.club — shared domain types
 // These mirror the Supabase schema (supabase/migrations/0001_init.sql) but use
 // camelCase for the app layer. Row → domain mapping lives in the lib/*.ts
 // data-access modules.

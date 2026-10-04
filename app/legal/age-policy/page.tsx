@@ -5,11 +5,11 @@ import { COMPANY, LEGAL_LAST_UPDATED } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Age Policy",
   description:
-    "How age requirements, minors, guardian consent and ID verification work across NovaLabs events.",
+    "How age requirements, minors, guardian consent and ID verification work across FizTickets events.",
   openGraph: {
-    title: "Age Policy · NovaLabs",
+    title: "Age Policy · FizTickets",
     description:
-      "How age requirements, minors, guardian consent and ID verification work at NovaLabs.",
+      "How age requirements, minors, guardian consent and ID verification work at FizTickets.",
     type: "article",
   },
 };

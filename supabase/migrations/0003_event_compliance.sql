@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — Migration 0003: event compliance + purchaser compliance capture
+-- FizTickets.club — Migration 0003: event compliance + purchaser compliance capture
 -- ============================================================================
 -- Additive only. Two jsonb columns keep the compliance model extensible for
 -- future international requirements without further schema churn:

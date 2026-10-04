@@ -17,7 +17,7 @@ const LEGAL_LINKS = [
 ];
 
 const COMPANY_LINKS = [
-  { href: "/about", label: "About NovaLabs" },
+  { href: "/about", label: "About FizTickets" },
   { href: "/contact", label: "Contact" },
 ];
 

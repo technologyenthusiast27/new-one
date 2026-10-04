@@ -15,11 +15,11 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
-  title: "About NovaLabs",
+  title: "About FizTickets",
   description:
-    "NovaLabs is a premium event experiences platform — cinematic nights, secure ticketing, and a community built on safety and trust.",
+    "FizTickets is a premium event experiences platform — cinematic nights, secure ticketing, and a community built on safety and trust.",
   openGraph: {
-    title: "About NovaLabs",
+    title: "About FizTickets",
     description:
       "A premium event experiences platform — cinematic nights, secure ticketing, and safety-first community.",
     type: "website",
