@@ -14,9 +14,9 @@
   body {
     @apply bg-charcoal-950 text-neutral-200 font-sans antialiased;
     background-image:
-      radial-gradient(1000px 600px at 15% -10%, rgba(212, 175, 55, 0.14), transparent 60%),
-      radial-gradient(900px 700px at 100% 10%, rgba(138, 109, 31, 0.12), transparent 55%),
-      radial-gradient(700px 700px at 50% 120%, rgba(244, 228, 176, 0.08), transparent 60%);
+      radial-gradient(1000px 600px at 15% -10%, rgba(255, 255, 255, 0.05), transparent 60%),
+      radial-gradient(900px 700px at 100% 10%, rgba(255, 255, 255, 0.035), transparent 55%),
+      radial-gradient(700px 700px at 50% 120%, rgba(255, 255, 255, 0.025), transparent 60%);
     background-attachment: fixed;
   }
 
@@ -34,14 +34,14 @@
     width: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: #000000;
   }
   ::-webkit-scrollbar-thumb {
-    background: #38322a;
+    background: #333333;
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #8a6d1f;
+    background: #666666;
   }
 }
 
@@ -64,13 +64,13 @@
   /* Gradient text */
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #ffffff 0%, #f4e4b0 45%, #d4af37 100%);
+    background-image: linear-gradient(135deg, #ffffff 0%, #e5e5e5 50%, #a3a3a3 100%);
   }
 
-  /* Legacy class name; now renders the gold accent gradient. */
+  /* Legacy class name; now renders the monochrome white→grey accent gradient. */
   .text-gradient-violet {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(120deg, #f4e4b0, #d4af37, #a67c00);
+    background-image: linear-gradient(120deg, #ffffff, #d4d4d4, #8a8a8a);
   }
 
   /* Primary CTA */
@@ -97,7 +97,7 @@
 
   .divider-glow {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
   }
 
   /* Noise / grain overlay */
@@ -139,8 +139,8 @@
   z-index: 200;
   padding: 0.6rem 1rem;
   border-radius: 9999px;
-  background: theme("colors.violet.deep");
-  color: #fff;
+  background: theme("colors.violet.soft");
+  color: #000;
   font-size: 0.875rem;
   transition: top 0.2s ease;
 }

@@ -8,26 +8,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Warm near-black base — pairs with gold (never a cold blue-black)
+        // Pure-black monochrome base (#000 page background, neutral grey ramp).
         charcoal: {
-          950: "#0a0a0a",
-          900: "#0f0e0c",
-          800: "#161410",
-          700: "#1f1c16",
-          600: "#2a261d",
-          500: "#38322a",
+          950: "#000000",
+          900: "#080808",
+          800: "#101010",
+          700: "#1a1a1a",
+          600: "#262626",
+          500: "#333333",
         },
-        // Gold accent palette. NOTE: the token is still keyed `violet` so the
-        // entire existing class surface (text-violet-soft, from-violet-glow,
-        // ring-violet-glow, etc.) re-themes to gold with zero per-file churn.
-        // The *values* are gold — the name is a legacy slot, not the colour.
+        // Monochrome accent palette (white/silver). NOTE: the token is still
+        // keyed `violet` so the entire existing class surface (text-violet-soft,
+        // from-violet-glow, ring-violet-glow, etc.) re-themes with zero per-file
+        // churn. The *values* are white/grey — the name is a legacy slot.
         violet: {
-          glow: "#d4af37", // primary metallic gold (buttons, glows, accents)
-          soft: "#e8c766", // brighter gold for text/links on near-black
-          deep: "#8a6d1f", // antique dark gold (gradient dark end)
-          mist: "#f4e4b0", // pale champagne gold (gradient light end)
+          glow: "#ffffff", // primary white (buttons, glows, accents)
+          soft: "#e5e5e5", // light silver for text/links/eyebrows on black
+          deep: "#a3a3a3", // mid grey (gradient dark end)
+          mist: "#ffffff", // white (gradient light end)
         },
-        gold: "#d4af37",
+        gold: "#e5e5e5",
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
@@ -37,9 +37,9 @@ const config: Config = {
         xs: "2px",
       },
       boxShadow: {
-        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.45)",
-        glow: "0 0 60px -12px rgba(212, 175, 55, 0.45)",
-        "glow-lg": "0 0 120px -20px rgba(212, 175, 55, 0.5)",
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.5)",
+        glow: "0 0 55px -14px rgba(255, 255, 255, 0.25)",
+        "glow-lg": "0 0 110px -22px rgba(255, 255, 255, 0.3)",
       },
       keyframes: {
         "fade-up": {

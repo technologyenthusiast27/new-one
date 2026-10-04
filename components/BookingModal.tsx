@@ -160,7 +160,7 @@ export function BookingModal({ event, ticketType, onClose }: BookingModalProps) 
         description: `${ticketType.name} Pass × ${quantity}`,
         order_id: order.orderId,
         prefill: { name: form.name, email: form.email, contact: form.phone },
-        theme: { color: "#d4af37" },
+        theme: { color: "#171717" },
         handler: (resp: {
           razorpay_payment_id: string;
           razorpay_signature: string;
