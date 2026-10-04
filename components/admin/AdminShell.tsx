@@ -2,29 +2,63 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, CalendarRange, LogOut, Sparkles } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { LayoutDashboard, CalendarRange, LogOut, Sparkles, ShieldCheck } from "lucide-react";
+import type { AdminRole } from "@/lib/types";
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; exact: boolean };
+
+const SECURITY_NAV: NavItem = {
+  href: "/admin/security",
+  label: "Security",
+  icon: ShieldCheck,
+  exact: true,
+};
+
+const SUPER_NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/events", label: "Events", icon: CalendarRange, exact: false },
+  SECURITY_NAV,
 ];
 
 export function AdminShell({
   email,
+  role,
+  eventHref,
   children,
 }: {
   email: string | null;
+  role: AdminRole;
+  eventHref?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Event admins only ever see a link to their own event; super admins get the
+  // full nav. This mirrors the server-side gating — it is not the enforcement.
+  const NAV: NavItem[] =
+    role === "super_admin"
+      ? SUPER_NAV
+      : eventHref && eventHref.startsWith("/admin/events/")
+        ? [
+            { href: eventHref, label: "My event", icon: CalendarRange, exact: false },
+            SECURITY_NAV,
+          ]
+        : [SECURITY_NAV];
+
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/admin/login");
-    router.refresh();
+    // Sign-out runs server-side so httpOnly auth cookies can be cleared and
+    // the event is audit logged.
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } finally {
+      router.replace("/admin/login");
+      router.refresh();
+    }
   }
 
   return (

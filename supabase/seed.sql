@@ -7,7 +7,9 @@
 -- ── Event: House of Balloons ────────────────────────────────────────────────
 insert into public.events (
   slug, code, name, presenter, tagline, status,
-  event_date, doors_open_at, venue_name, venue_city, currency, content
+  event_date, doors_open_at, venue_name, venue_city, currency,
+  age_category, minors_allowed, guardian_consent_required, id_required,
+  compliance, content
 ) values (
   'house-of-balloons',
   'HOB',
@@ -20,6 +22,17 @@ insert into public.events (
   'The Grand Pavilion',
   'Hyderabad, Telangana, India',
   'INR',
+  '18_plus', false, false, true,
+  jsonb_build_object(
+    'entryInstructions', 'Entry is via the East Gate only. Have your QR ticket ready on your phone or printed. Doors open at 12:00 PM; last entry 11:00 PM.',
+    'venueRules', 'No re-entry once you leave. Smoking only in designated zones. Management reserves the right of admission. Please follow all staff and security instructions.',
+    'safetyGuidelines', 'Trained medical staff and first-aid are on site. Locate the nearest marked exit on arrival. Stay hydrated — free drinking water is available. Report anything suspicious to security immediately.',
+    'itemsAllowed', jsonb_build_array('Government photo ID', 'Phone & power bank', 'Sealed water bottle', 'Small hand purse'),
+    'itemsProhibited', jsonb_build_array('Outside food or drink', 'Weapons or sharp objects', 'Illegal substances', 'Professional cameras or drones', 'Large bags or backpacks'),
+    'accessibilityInfo', 'Wheelchair-accessible entry and restrooms are available at the East Gate. For accessibility assistance, contact us in advance at support@novalabs.club.',
+    'emergencyContactName', 'NovaLabs Event Safety Desk',
+    'emergencyContactPhone', '+91 90000 00000'
+  ),
   jsonb_build_object(
     'experience', jsonb_build_array(
       jsonb_build_object('title','Immersive Sound','body','A tuned line-array system engineered for depth, clarity and body-moving low end.'),
@@ -45,18 +58,23 @@ insert into public.events (
   )
 )
 on conflict (slug) do update set
-  code          = excluded.code,
-  name          = excluded.name,
-  presenter     = excluded.presenter,
-  tagline       = excluded.tagline,
-  status        = excluded.status,
-  event_date    = excluded.event_date,
-  doors_open_at = excluded.doors_open_at,
-  venue_name    = excluded.venue_name,
-  venue_city    = excluded.venue_city,
-  currency      = excluded.currency,
-  content       = excluded.content,
-  updated_at    = now();
+  code                      = excluded.code,
+  name                      = excluded.name,
+  presenter                 = excluded.presenter,
+  tagline                   = excluded.tagline,
+  status                    = excluded.status,
+  event_date                = excluded.event_date,
+  doors_open_at             = excluded.doors_open_at,
+  venue_name                = excluded.venue_name,
+  venue_city                = excluded.venue_city,
+  currency                  = excluded.currency,
+  age_category              = excluded.age_category,
+  minors_allowed            = excluded.minors_allowed,
+  guardian_consent_required = excluded.guardian_consent_required,
+  id_required               = excluded.id_required,
+  compliance                = excluded.compliance,
+  content                   = excluded.content,
+  updated_at                = now();
 
 -- ── Ticket types ────────────────────────────────────────────────────────────
 insert into public.ticket_types (

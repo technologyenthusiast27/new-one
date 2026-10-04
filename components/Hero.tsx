@@ -139,7 +139,7 @@ export function Hero({
           className="mt-6 text-xs text-neutral-500"
         >
           {minPrice != null && <>Passes from {inr(minPrice)} · </>}
-          Limited capacity · 18+ event
+          Limited capacity
         </motion.p>
       </motion.div>
 

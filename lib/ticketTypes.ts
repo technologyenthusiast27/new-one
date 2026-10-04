@@ -123,8 +123,12 @@ export async function createTicketType(
   return mapTicketType(data as TicketTypeRow);
 }
 
+// Mutations are scoped to the owning event id as well as the type id, so an
+// event's admin can never update/delete a ticket type belonging to another
+// event even if they guess its id (IDOR defence in depth beyond RLS).
 export async function updateTicketType(
   supabase: SupabaseClient,
+  eventId: string,
   id: string,
   input: Partial<TicketTypeInput>,
 ): Promise<TicketType | null> {
@@ -132,6 +136,7 @@ export async function updateTicketType(
     .from("ticket_types")
     .update({ ...toRow(input), updated_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("event_id", eventId)
     .select(COLS)
     .maybeSingle();
   if (error) throw error;
@@ -140,8 +145,13 @@ export async function updateTicketType(
 
 export async function deleteTicketType(
   supabase: SupabaseClient,
+  eventId: string,
   id: string,
 ): Promise<void> {
-  const { error } = await supabase.from("ticket_types").delete().eq("id", id);
+  const { error } = await supabase
+    .from("ticket_types")
+    .delete()
+    .eq("id", id)
+    .eq("event_id", eventId);
   if (error) throw error;
 }

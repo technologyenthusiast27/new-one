@@ -14,7 +14,13 @@ const STATUS_BADGE: Record<EventStatus, string> = {
   archived: "bg-neutral-500/15 text-neutral-400 ring-neutral-500/30",
 };
 
-export function EventsManager({ initialEvents }: { initialEvents: Event[] }) {
+export function EventsManager({
+  initialEvents,
+  canCreate = true,
+}: {
+  initialEvents: Event[];
+  canCreate?: boolean;
+}) {
   const [events, setEvents] = useState(initialEvents);
   const [creating, setCreating] = useState(false);
 
@@ -25,17 +31,19 @@ export function EventsManager({ initialEvents }: { initialEvents: Event[] }) {
           <span className="section-eyebrow">Manage</span>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Events</h1>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreating((v) => !v)}
-          className={creating ? "btn-ghost" : "btn-primary"}
-        >
-          {creating ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {creating ? "Close" : "New event"}
-        </button>
+        {canCreate && (
+          <button
+            type="button"
+            onClick={() => setCreating((v) => !v)}
+            className={creating ? "btn-ghost" : "btn-primary"}
+          >
+            {creating ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {creating ? "Close" : "New event"}
+          </button>
+        )}
       </div>
 
-      {creating && (
+      {canCreate && creating && (
         <div className="mt-6">
           <EventForm
             onSaved={(event) => {

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Order, OrderStatus } from "./types";
+import type { Order, OrderCompliance, OrderStatus } from "./types";
 
 interface OrderRow {
   id: string;
@@ -17,6 +17,8 @@ interface OrderRow {
   razorpay_signature: string | null;
   failure_reason: string | null;
   is_demo: boolean;
+  compliance: OrderCompliance | null;
+  guest_names: (string | null)[] | null;
   created_at: string;
   paid_at: string | null;
 }
@@ -38,13 +40,16 @@ export function mapOrder(row: OrderRow): Order {
     razorpaySignature: row.razorpay_signature,
     failureReason: row.failure_reason,
     isDemo: row.is_demo,
+    compliance: row.compliance ?? {},
+    guestNames: Array.isArray(row.guest_names) ? row.guest_names : [],
     createdAt: row.created_at,
     paidAt: row.paid_at,
   };
 }
 
-const COLS =
-  "id, event_id, ticket_type_id, razorpay_order_id, quantity, amount_inr, currency, buyer_name, buyer_email, buyer_phone, status, razorpay_payment_id, razorpay_signature, failure_reason, is_demo, created_at, paid_at";
+// Select all columns so reads tolerate additive migrations (e.g. 0003's
+// compliance column) that may not be applied yet.
+const COLS = "*";
 
 export interface CreateOrderInput {
   eventId: string;
@@ -57,30 +62,59 @@ export interface CreateOrderInput {
   buyerEmail: string;
   buyerPhone: string;
   isDemo: boolean;
+  compliance?: OrderCompliance;
+  guestNames?: (string | null)[];
 }
+
+// Postgres "undefined column" error code — used to gracefully degrade when an
+// additive migration (0003 compliance / 0006 guest_names) hasn't been applied.
+const UNDEFINED_COLUMN = "42703";
 
 /** Insert a fresh order in the 'created' state. Service-role client. */
 export async function createOrderRecord(
   supabase: SupabaseClient,
   input: CreateOrderInput,
 ): Promise<Order> {
-  const { data, error } = await supabase
+  const base = {
+    event_id: input.eventId,
+    ticket_type_id: input.ticketTypeId,
+    razorpay_order_id: input.razorpayOrderId,
+    quantity: input.quantity,
+    amount_inr: input.amountInr,
+    currency: input.currency,
+    buyer_name: input.buyerName,
+    buyer_email: input.buyerEmail,
+    buyer_phone: input.buyerPhone,
+    status: "created" as const,
+    is_demo: input.isDemo,
+  };
+
+  const withExtras = {
+    ...base,
+    compliance: input.compliance ?? {},
+    guest_names: input.guestNames ?? [],
+  };
+
+  let { data, error } = await supabase
     .from("orders")
-    .insert({
-      event_id: input.eventId,
-      ticket_type_id: input.ticketTypeId,
-      razorpay_order_id: input.razorpayOrderId,
-      quantity: input.quantity,
-      amount_inr: input.amountInr,
-      currency: input.currency,
-      buyer_name: input.buyerName,
-      buyer_email: input.buyerEmail,
-      buyer_phone: input.buyerPhone,
-      status: "created",
-      is_demo: input.isDemo,
-    })
+    .insert(withExtras)
     .select(COLS)
     .single();
+
+  // If an additive column doesn't exist yet, fall back to the base insert so
+  // the booking flow still succeeds.
+  if (
+    error &&
+    (error.code === UNDEFINED_COLUMN ||
+      /compliance|guest_names/i.test(error.message))
+  ) {
+    ({ data, error } = await supabase
+      .from("orders")
+      .insert(base)
+      .select(COLS)
+      .single());
+  }
+
   if (error) throw error;
   return mapOrder(data as OrderRow);
 }

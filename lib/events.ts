@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Event, EventContent, EventStatus } from "./types";
+import type {
+  AgeCategory,
+  Event,
+  EventCompliance,
+  EventContent,
+  EventStatus,
+} from "./types";
 
 // Row shape as stored in Postgres (snake_case).
 interface EventRow {
@@ -17,6 +23,11 @@ interface EventRow {
   currency: string;
   cover_image_url: string | null;
   content: EventContent | null;
+  age_category: AgeCategory | null;
+  minors_allowed: boolean | null;
+  guardian_consent_required: boolean | null;
+  id_required: boolean | null;
+  compliance: EventCompliance | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,13 +48,21 @@ export function mapEvent(row: EventRow): Event {
     currency: row.currency,
     coverImageUrl: row.cover_image_url,
     content: row.content ?? {},
+    ageCategory: row.age_category ?? "18_plus",
+    minorsAllowed: row.minors_allowed ?? false,
+    guardianConsentRequired: row.guardian_consent_required ?? false,
+    idRequired: row.id_required ?? true,
+    compliance: row.compliance ?? {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-const COLS =
-  "id, slug, code, name, presenter, tagline, status, event_date, doors_open_at, venue_name, venue_city, currency, cover_image_url, content, created_at, updated_at";
+// Select all columns rather than an explicit list. This keeps event reads
+// resilient to additive migrations that haven't been applied yet (a missing
+// column would otherwise error the whole query and blank the event grid).
+// mapEvent() defaults any age-policy fields that are absent.
+const COLS = "*";
 
 /** Public homepage grid: published + coming_soon events, soonest first. */
 export async function getVisibleEvents(supabase: SupabaseClient): Promise<Event[]> {
@@ -61,6 +80,27 @@ export async function listAllEvents(supabase: SupabaseClient): Promise<Event[]> 
   const { data, error } = await supabase
     .from("events")
     .select(COLS)
+    .order("event_date", { ascending: true });
+  if (error) throw error;
+  return (data as EventRow[]).map(mapEvent);
+}
+
+/**
+ * Events an admin may manage. Super admins see everything; event admins see
+ * only their assigned events. Published events are readable by anyone via RLS,
+ * so this filter (not RLS alone) is what keeps an event admin's dashboard
+ * scoped to their events.
+ */
+export async function listEventsForAdmin(
+  supabase: SupabaseClient,
+  admin: { role: "super_admin" | "event_admin"; eventIds: string[] },
+): Promise<Event[]> {
+  if (admin.role === "super_admin") return listAllEvents(supabase);
+  if (admin.eventIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("events")
+    .select(COLS)
+    .in("id", admin.eventIds)
     .order("event_date", { ascending: true });
   if (error) throw error;
   return (data as EventRow[]).map(mapEvent);
@@ -92,6 +132,19 @@ export async function getEventById(
   return data ? mapEvent(data as EventRow) : null;
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Resolve an event by its UUID or its slug (for admin deep links). */
+export async function getEventByIdOrSlug(
+  supabase: SupabaseClient,
+  idOrSlug: string,
+): Promise<Event | null> {
+  return UUID_RE.test(idOrSlug)
+    ? getEventById(supabase, idOrSlug)
+    : getEventBySlug(supabase, idOrSlug);
+}
+
 export interface EventInput {
   slug: string;
   code: string;
@@ -106,6 +159,11 @@ export interface EventInput {
   currency?: string;
   coverImageUrl?: string | null;
   content?: EventContent;
+  ageCategory?: AgeCategory;
+  minorsAllowed?: boolean;
+  guardianConsentRequired?: boolean;
+  idRequired?: boolean;
+  compliance?: EventCompliance;
 }
 
 function toRow(input: Partial<EventInput>) {
@@ -123,6 +181,12 @@ function toRow(input: Partial<EventInput>) {
   if (input.currency !== undefined) row.currency = input.currency;
   if (input.coverImageUrl !== undefined) row.cover_image_url = input.coverImageUrl;
   if (input.content !== undefined) row.content = input.content;
+  if (input.ageCategory !== undefined) row.age_category = input.ageCategory;
+  if (input.minorsAllowed !== undefined) row.minors_allowed = input.minorsAllowed;
+  if (input.guardianConsentRequired !== undefined)
+    row.guardian_consent_required = input.guardianConsentRequired;
+  if (input.idRequired !== undefined) row.id_required = input.idRequired;
+  if (input.compliance !== undefined) row.compliance = input.compliance;
   return row;
 }
 
