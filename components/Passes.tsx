@@ -40,8 +40,8 @@ export function Passes({
               }`}
             >
               {tt.isFeatured && (
-                <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-glow to-violet-deep px-4 py-1 text-xs font-semibold text-white shadow-glow">
-                  <Star className="h-3.5 w-3.5 fill-white" />
+                <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-glow to-violet-deep px-4 py-1 text-xs font-semibold text-charcoal-950 shadow-glow">
+                  <Star className="h-3.5 w-3.5 fill-charcoal-950" />
                   Most popular
                 </span>
               )}

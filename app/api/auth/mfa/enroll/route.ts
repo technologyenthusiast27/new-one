@@ -14,14 +14,16 @@ export async function POST(req: Request) {
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  const limited = await enforceRateLimit(req, { name: "mfa-enroll", limit: 6, windowSec: 300 });
-  if (limited) return limited;
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  // Keyed by ACCOUNT, not IP: an attacker on an aal1 session can't churn
+  // enrollment attempts (and clear factors) by rotating source addresses.
+  const limited = await enforceRateLimit(req, { name: "mfa-enroll", limit: 6, windowSec: 300, key: user.id });
+  if (limited) return limited;
 
   // Only admin accounts manage MFA here.
   const { data: profile } = await supabase

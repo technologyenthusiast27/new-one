@@ -14,9 +14,9 @@
   body {
     @apply bg-charcoal-950 text-neutral-200 font-sans antialiased;
     background-image:
-      radial-gradient(1000px 600px at 15% -10%, rgba(139, 92, 246, 0.16), transparent 60%),
-      radial-gradient(900px 700px at 100% 10%, rgba(109, 40, 217, 0.14), transparent 55%),
-      radial-gradient(700px 700px at 50% 120%, rgba(167, 139, 250, 0.1), transparent 60%);
+      radial-gradient(1000px 600px at 15% -10%, rgba(212, 175, 55, 0.14), transparent 60%),
+      radial-gradient(900px 700px at 100% 10%, rgba(138, 109, 31, 0.12), transparent 55%),
+      radial-gradient(700px 700px at 50% 120%, rgba(244, 228, 176, 0.08), transparent 60%);
     background-attachment: fixed;
   }
 
@@ -34,14 +34,14 @@
     width: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #0b0b10;
+    background: #0a0a0a;
   }
   ::-webkit-scrollbar-thumb {
-    background: #2f2f40;
+    background: #38322a;
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #6d28d9;
+    background: #8a6d1f;
   }
 }
 
@@ -64,18 +64,19 @@
   /* Gradient text */
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #ffffff 0%, #c4b5fd 55%, #8b5cf6 100%);
+    background-image: linear-gradient(135deg, #ffffff 0%, #f4e4b0 45%, #d4af37 100%);
   }
 
+  /* Legacy class name; now renders the gold accent gradient. */
   .text-gradient-violet {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(120deg, #a78bfa, #8b5cf6, #6d28d9);
+    background-image: linear-gradient(120deg, #f4e4b0, #d4af37, #a67c00);
   }
 
   /* Primary CTA */
   .btn-primary {
     @apply relative inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5
-           text-sm font-semibold text-white transition-all duration-300
+           text-sm font-semibold text-charcoal-950 transition-all duration-300
            bg-gradient-to-br from-violet-glow to-violet-deep
            shadow-glow hover:shadow-glow-lg hover:-translate-y-0.5
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-soft
@@ -96,7 +97,7 @@
 
   .divider-glow {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
   }
 
   /* Noise / grain overlay */

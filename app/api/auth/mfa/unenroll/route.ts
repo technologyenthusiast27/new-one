@@ -17,9 +17,6 @@ export async function POST(req: Request) {
   const csrf = rejectCrossOrigin(req);
   if (csrf) return csrf;
 
-  const limited = await enforceRateLimit(req, { name: "mfa-unenroll", limit: 5, windowSec: 300 });
-  if (limited) return limited;
-
   const parsed = await readJson(req, mfaUnenrollSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -28,6 +25,9 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { name: "mfa-unenroll", limit: 5, windowSec: 300, key: user.id });
+  if (limited) return limited;
 
   // aal2 required to remove a factor.
   try {

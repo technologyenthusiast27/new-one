@@ -31,7 +31,7 @@ export default async function HomePage() {
         <div className="mx-auto my-4 flex max-w-7xl items-center justify-between rounded-full glass px-5 py-2.5 sm:px-8">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-glow to-violet-deep shadow-glow">
-              <Sparkles className="h-4 w-4 text-white" />
+              <Sparkles className="h-4 w-4 text-charcoal-950" />
             </span>
             <span className="flex flex-col leading-none">
               <span className="font-display text-sm font-semibold tracking-wide text-white">
