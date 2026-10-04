@@ -13,7 +13,7 @@ export default function NotFound() {
           doesn&apos;t exist.
         </p>
         <Link href="/" className="btn-primary mt-8">
-          Back to NovaLabs
+          Back to FizTickets
         </Link>
       </div>
     </main>

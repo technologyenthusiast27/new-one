@@ -67,10 +67,10 @@ export function AdminShell({
       <aside className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-white/10 bg-charcoal-950/70 px-5 py-3 backdrop-blur lg:h-dvh lg:flex-col lg:items-stretch lg:justify-start lg:border-b-0 lg:border-r lg:py-6">
         <Link href="/admin" className="flex items-center gap-2.5 lg:px-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-glow to-violet-deep shadow-glow">
-            <Sparkles className="h-4 w-4 text-white" />
+            <Sparkles className="h-4 w-4 text-charcoal-950" />
           </span>
           <span className="flex flex-col leading-none">
-            <span className="font-display text-sm font-semibold text-white">NovaLabs</span>
+            <span className="font-display text-sm font-semibold text-white">FizTickets</span>
             <span className="text-[10px] uppercase tracking-[0.2em] text-violet-soft/80">
               Admin
             </span>

@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — Migration 0005: attendee-based ticketing
+-- FizTickets.club — Migration 0005: attendee-based ticketing
 -- ============================================================================
 -- A booking (tickets row) that admits N seats now has N attendees, each with a
 -- unique code + QR and its own check-in state. Backfills attendees for every

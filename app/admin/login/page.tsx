@@ -114,7 +114,7 @@ function LoginForm() {
         )}
       </div>
       <h1 className="text-2xl font-semibold">
-        {step === "password" ? "NovaLabs admin" : "Two-factor check"}
+        {step === "password" ? "FizTickets admin" : "Two-factor check"}
       </h1>
       <p className="mt-2 text-sm text-neutral-400">
         {step === "password"
@@ -142,7 +142,7 @@ function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@novalabs.club"
+            placeholder="you@fiztickets.club"
             className={inputCls}
           />
 

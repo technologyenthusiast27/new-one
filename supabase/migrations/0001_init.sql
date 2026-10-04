@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — multi-event ticketing platform
+-- FizTickets.club — multi-event ticketing platform
 -- Migration 0001: initial schema, trigger, and RLS policies
 -- ============================================================================
 -- This file is the source of truth for the database schema. Apply it to the

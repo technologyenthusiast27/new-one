@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — seed data
+-- FizTickets.club — seed data
 -- Version 1: House of Balloons (the one fully-functional event).
 -- Safe to re-run: upserts by unique slug / (event_id, code).
 -- ============================================================================
@@ -29,8 +29,8 @@ insert into public.events (
     'safetyGuidelines', 'Trained medical staff and first-aid are on site. Locate the nearest marked exit on arrival. Stay hydrated — free drinking water is available. Report anything suspicious to security immediately.',
     'itemsAllowed', jsonb_build_array('Government photo ID', 'Phone & power bank', 'Sealed water bottle', 'Small hand purse'),
     'itemsProhibited', jsonb_build_array('Outside food or drink', 'Weapons or sharp objects', 'Illegal substances', 'Professional cameras or drones', 'Large bags or backpacks'),
-    'accessibilityInfo', 'Wheelchair-accessible entry and restrooms are available at the East Gate. For accessibility assistance, contact us in advance at support@novalabs.club.',
-    'emergencyContactName', 'NovaLabs Event Safety Desk',
+    'accessibilityInfo', 'Wheelchair-accessible entry and restrooms are available at the East Gate. For accessibility assistance, contact us in advance at support@fiztickets.club.',
+    'emergencyContactName', 'FizTickets Event Safety Desk',
     'emergencyContactPhone', '+91 90000 00000'
   ),
   jsonb_build_object(

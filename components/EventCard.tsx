@@ -3,7 +3,7 @@ import { CalendarDays, MapPin, ArrowUpRight, Lock } from "lucide-react";
 import type { Event } from "@/lib/types";
 import { formatEventDate } from "@/lib/format";
 
-/** A single glowing event card for the NovaLabs homepage grid. */
+/** A single glowing event card for the FizTickets homepage grid. */
 export function EventCard({ event }: { event: Event }) {
   const isLive = event.status === "published";
   const venue = [event.venueName, event.venueCity].filter(Boolean).join(", ");

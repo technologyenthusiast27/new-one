@@ -9,9 +9,9 @@ import { ContactForm } from "@/components/ContactForm";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with NovaLabs — support, partnerships and business enquiries. We typically respond within 24–48 hours.",
+    "Get in touch with FizTickets — support, partnerships and business enquiries. We typically respond within 24–48 hours.",
   openGraph: {
-    title: "Contact NovaLabs",
+    title: "Contact FizTickets",
     description:
       "Support, partnerships and business enquiries. We typically respond within 24–48 hours.",
     type: "website",
@@ -74,7 +74,7 @@ export default function ContactPage() {
 
               {/* Google Maps placeholder */}
               <div className="overflow-hidden rounded-2xl glass">
-                <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.15),transparent_60%)] text-center">
+                <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.06),transparent_60%)] text-center">
                   <MapPin className="h-8 w-8 text-violet-soft" />
                   <p className="text-sm font-medium text-white">{COMPANY.addressLine}</p>
                   <p className="text-xs text-neutral-500">Map preview — embed coming soon</p>

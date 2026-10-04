@@ -90,7 +90,7 @@ export default async function BookingPage(
             {/* Header */}
             <div className="relative bg-gradient-to-br from-violet-deep/40 via-charcoal-800 to-charcoal-900 px-7 pt-8 pb-6">
               <p className="text-[11px] uppercase tracking-[0.25em] text-violet-soft">
-                {event ? `${event.presenter} presents` : "NovaLabs"}
+                {event ? `${event.presenter} presents` : "FizTickets"}
               </p>
               <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-white">
                 {event?.name ?? "Your tickets"}

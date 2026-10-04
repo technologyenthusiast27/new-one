@@ -11,7 +11,7 @@ const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT || 587);
 const user = process.env.SMTP_USER;
 const pass = process.env.SMTP_PASS;
-const from = process.env.SMTP_FROM || "NovaLabs <tickets@novalabs.club>";
+const from = process.env.SMTP_FROM || "FizTickets <tickets@fiztickets.club>";
 
 export const emailConfigured = Boolean(host && user && pass);
 
@@ -52,7 +52,7 @@ function attendeeQrBlock(a: AttendeeQr): string {
     : `Guest #${a.attendee.seatIndex}`;
   return `
     <div style="text-align:center;background:#ffffff;border-radius:16px;padding:16px;margin:0 0 14px;">
-      <p style="color:#6d28d9;font-size:13px;font-weight:700;margin:0 0 8px;">${name}</p>
+      <p style="color:#111111;font-size:13px;font-weight:700;margin:0 0 8px;">${name}</p>
       <img src="${a.qrDataUrl}" alt="Entry QR code" width="180" height="180" style="display:block;margin:0 auto;" />
       <p style="color:#111827;font-family:monospace;font-size:12px;margin:10px 0 0;letter-spacing:1px;">${escapeHtml(a.attendee.ticketCode)}</p>
     </div>`;
@@ -63,14 +63,14 @@ function ticketEmailHtml(event: Event, ticket: Ticket, attendees: AttendeeQr[]):
   const venue = escapeHtml([event.venueName, event.venueCity].filter(Boolean).join(", "));
   const firstName = escapeHtml(ticket.buyerName.split(" ")[0] ?? "");
   return `
-  <div style="margin:0;padding:0;background:#0b0b10;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+  <div style="margin:0;padding:0;background:#000000;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
     <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
-      <p style="letter-spacing:4px;font-size:11px;color:#a78bfa;text-transform:uppercase;margin:0 0 8px;">${escapeHtml(event.presenter)} presents</p>
+      <p style="letter-spacing:4px;font-size:11px;color:#e5e5e5;text-transform:uppercase;margin:0 0 8px;">${escapeHtml(event.presenter)} presents</p>
       <h1 style="font-size:30px;line-height:1.1;color:#ffffff;margin:0 0 4px;font-weight:700;">${escapeHtml(event.name)}</h1>
       <p style="color:#9ca3af;margin:0 0 28px;font-size:14px;">${escapeHtml(event.tagline ?? "")}</p>
 
-      <div style="background:#14141c;border:1px solid rgba(139,92,246,0.25);border-radius:20px;padding:28px;">
-        <p style="color:#c4b5fd;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;">You're in, ${firstName} 🎈</p>
+      <div style="background:#101010;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:28px;">
+        <p style="color:#d4d4d4;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;">You're in, ${firstName} 🎈</p>
         <h2 style="color:#ffffff;margin:0 0 20px;font-size:20px;">${escapeHtml(ticket.ticketTypeName)} Pass &middot; ${ticket.quantity} × &middot; ${ticket.seats} guest${ticket.seats > 1 ? "s" : ""}</h2>
 
         <p style="color:#9ca3af;font-size:13px;margin:0 0 14px;">${attendees.length > 1 ? `Each guest has their own QR — one scan per person:` : `Your entry QR:`}</p>
@@ -85,7 +85,7 @@ function ticketEmailHtml(event: Event, ticket: Ticket, attendees: AttendeeQr[]):
       </div>
 
       <div style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:600;font-size:14px;">View your digital ticket</a>
+        <a href="${url}" style="display:inline-block;background:#ffffff;color:#000000;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:700;font-size:14px;">View your digital ticket</a>
       </div>
 
       <p style="color:#6b7280;font-size:12px;text-align:center;line-height:1.6;margin:24px 0 0;">

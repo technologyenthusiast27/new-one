@@ -1,9 +1,9 @@
-# ✨ NovaLabs.club
+# ✨ FizTickets.club
 
 A production-ready, **multi-event ticketing platform** — built with **Next.js
 (App Router)**, **Tailwind CSS**, **Supabase**, **Razorpay** and **Vercel**.
 
-NovaLabs is architected for many events from day one. **Version 1** ships one
+FizTickets is architected for many events from day one. **Version 1** ships one
 fully functional event — **House of Balloons** (presented by Wolves Production) —
 plus a DB-driven homepage grid where additional events appear simply by adding
 rows, with no code changes.
@@ -129,7 +129,7 @@ database trigger. Sign in at `/admin/login` with those credentials.
 2. Add all env vars from `.env.example` in **Project → Settings → Environment
    Variables** (mark `SUPABASE_SERVICE_ROLE_KEY` and the Razorpay/SMTP secrets as
    sensitive). Set `NEXT_PUBLIC_SITE_URL` to the deployment URL.
-3. Deploy. (Custom domain `novalabs.club` can be attached later.)
+3. Deploy. (Custom domain `fiztickets.club` can be attached later.)
 
 ## 📦 Scripts
 

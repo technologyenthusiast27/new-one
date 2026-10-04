@@ -5,11 +5,11 @@ import { COMPANY, LEGAL_LAST_UPDATED } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Terms & Conditions",
   description:
-    "The terms governing your use of the NovaLabs website, ticket purchases and event entry.",
+    "The terms governing your use of the FizTickets website, ticket purchases and event entry.",
   openGraph: {
-    title: "Terms & Conditions · NovaLabs",
+    title: "Terms & Conditions · FizTickets",
     description:
-      "The terms governing your use of the NovaLabs website, ticket purchases and event entry.",
+      "The terms governing your use of the FizTickets website, ticket purchases and event entry.",
     type: "article",
   },
 };

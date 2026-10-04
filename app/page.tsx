@@ -31,11 +31,11 @@ export default async function HomePage() {
         <div className="mx-auto my-4 flex max-w-7xl items-center justify-between rounded-full glass px-5 py-2.5 sm:px-8">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-glow to-violet-deep shadow-glow">
-              <Sparkles className="h-4 w-4 text-white" />
+              <Sparkles className="h-4 w-4 text-charcoal-950" />
             </span>
             <span className="flex flex-col leading-none">
               <span className="font-display text-sm font-semibold tracking-wide text-white">
-                NovaLabs
+                FizTickets
               </span>
               <span className="text-[10px] uppercase tracking-[0.2em] text-violet-soft/80">
                 Events & Ticketing
@@ -78,7 +78,7 @@ export default async function HomePage() {
               <span className="block text-gradient-violet italic">BECOME LEGEND</span>
             </h1>
             <p className="mx-auto mt-7 max-w-xl text-balance text-base text-neutral-300 sm:text-lg">
-              NovaLabs produces cinematic events worth remembering. Discover the
+              FizTickets produces cinematic events worth remembering. Discover the
               lineup, pick your pass, and get an instant QR ticket to the door.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -118,7 +118,7 @@ export default async function HomePage() {
               />
               <span className="section-eyebrow">For organizers</span>
               <h2 className="mx-auto mt-5 max-w-2xl text-3xl font-semibold leading-tight sm:text-5xl">
-                Run your event on <span className="text-gradient-violet italic">NovaLabs</span>
+                Run your event on <span className="text-gradient-violet italic">FizTickets</span>
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-neutral-400">
                 Ticket types, secure Razorpay payments, digital QR tickets and live

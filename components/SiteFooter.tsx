@@ -17,7 +17,7 @@ const LEGAL_LINKS = [
 ];
 
 const COMPANY_LINKS = [
-  { href: "/about", label: "About NovaLabs" },
+  { href: "/about", label: "About FizTickets" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -39,7 +39,7 @@ export function SiteFooter() {
           <div className="lg:col-span-2">
             <Link href="/" className="inline-flex items-center gap-2.5">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-glow to-violet-deep shadow-glow">
-                <Sparkles className="h-4 w-4 text-white" />
+                <Sparkles className="h-4 w-4 text-charcoal-950" />
               </span>
               <span className="flex flex-col leading-none">
                 <span className="font-display text-lg font-semibold text-white">

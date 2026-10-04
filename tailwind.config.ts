@@ -8,23 +8,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Charcoal base — never pure black
+        // Pure-black monochrome base (#000 page background, neutral grey ramp).
         charcoal: {
-          950: "#0b0b10",
-          900: "#0e0e14",
-          800: "#14141c",
-          700: "#1b1b26",
-          600: "#242432",
-          500: "#2f2f40",
+          950: "#000000",
+          900: "#080808",
+          800: "#101010",
+          700: "#1a1a1a",
+          600: "#262626",
+          500: "#333333",
         },
-        // Soft purple ambient palette
+        // Monochrome accent palette (white/silver). NOTE: the token is still
+        // keyed `violet` so the entire existing class surface (text-violet-soft,
+        // from-violet-glow, ring-violet-glow, etc.) re-themes with zero per-file
+        // churn. The *values* are white/grey — the name is a legacy slot.
         violet: {
-          glow: "#8b5cf6",
-          soft: "#a78bfa",
-          deep: "#6d28d9",
-          mist: "#c4b5fd",
+          glow: "#ffffff", // primary white (buttons, glows, accents)
+          soft: "#e5e5e5", // light silver for text/links/eyebrows on black
+          deep: "#a3a3a3", // mid grey (gradient dark end)
+          mist: "#ffffff", // white (gradient light end)
         },
-        gold: "#e6c983",
+        gold: "#e5e5e5",
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
@@ -34,9 +37,9 @@ const config: Config = {
         xs: "2px",
       },
       boxShadow: {
-        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
-        glow: "0 0 60px -12px rgba(139, 92, 246, 0.5)",
-        "glow-lg": "0 0 120px -20px rgba(139, 92, 246, 0.55)",
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.5)",
+        glow: "0 0 55px -14px rgba(255, 255, 255, 0.25)",
+        "glow-lg": "0 0 110px -22px rgba(255, 255, 255, 0.3)",
       },
       keyframes: {
         "fade-up": {

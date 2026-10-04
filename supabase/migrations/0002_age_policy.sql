@@ -1,5 +1,5 @@
 -- ============================================================================
--- NovaLabs.club — Migration 0002: per-event age & entry policy
+-- FizTickets.club — Migration 0002: per-event age & entry policy
 -- ============================================================================
 -- Additive only. Existing rows get safe defaults (18+, ID required, no minors),
 -- so the booking flow and existing tickets are unaffected. Organizers configure
